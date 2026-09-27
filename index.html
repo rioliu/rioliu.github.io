@@ -3,17 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>dbq — the guarded database CLI</title>
-<meta name="description" content="dbq is a multi-database query CLI with read-only-by-default guardrails. Credential profiles in, query results out. Built for humans, safe for agents.">
-<meta property="og:title" content="dbq — the guarded database CLI">
-<meta property="og:description" content="Multi-database access with two-layer read-only guardrails. MySQL, PostgreSQL, SQL Server, SQLite, Oracle.">
+<title>Rio Liu — Open Source</title>
+<meta name="description" content="Guidance page for Rio Liu's open-source work: dbq, liepin-cli-go, easytest and Red Hat contribution write-ups.">
+<meta property="og:title" content="Rio Liu — Open Source">
+<meta property="og:description" content="Guidance page for my open-source projects: dbq, liepin-cli-go, easytest and Red Hat write-ups.">
 <meta property="og:url" content="https://rioliu.github.io/">
 <meta property="og:type" content="website">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <style>
   :root {
     --bg: #070b12;
-    --bg-soft: #0b1120;
     --panel: rgba(148, 163, 184, 0.045);
     --panel-hover: rgba(148, 163, 184, 0.075);
     --border: rgba(148, 163, 184, 0.14);
@@ -24,31 +23,24 @@
     --teal: #2dd4bf;
     --mint: #5eead4;
     --green: #4ade80;
-    --red: #f87171;
-    --amber: #fbbf24;
     --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.6;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    font-family: var(--sans); background: var(--bg); color: var(--text);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden;
   }
   ::selection { background: rgba(45, 212, 191, 0.35); color: #fff; }
   a { color: inherit; text-decoration: none; }
-  code, pre { font-family: var(--mono); }
+  code { font-family: var(--mono); }
 
-  /* ---------- ambient background ---------- */
   .glow {
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background:
-      radial-gradient(700px 420px at 18% -5%, rgba(45, 212, 191, 0.16), transparent 65%),
-      radial-gradient(560px 380px at 88% 8%, rgba(13, 148, 136, 0.12), transparent 60%),
+      radial-gradient(700px 420px at 20% -5%, rgba(45, 212, 191, 0.15), transparent 65%),
+      radial-gradient(560px 380px at 85% 10%, rgba(13, 148, 136, 0.1), transparent 60%),
       radial-gradient(900px 500px at 50% 110%, rgba(74, 222, 128, 0.05), transparent 60%);
   }
   .grid-bg {
@@ -59,10 +51,8 @@
             mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
     opacity: 0.5;
   }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
-
-  /* ---------- nav ---------- */
   header.nav {
     position: sticky; top: 0; z-index: 50;
     backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -70,202 +60,93 @@
     border-bottom: 1px solid rgba(148, 163, 184, 0.08);
   }
   .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
-  .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
-  .brand img { width: 30px; height: 30px; }
-  .chip {
-    font-size: 11.5px; font-weight: 600; font-family: var(--mono);
-    color: var(--mint); background: rgba(45, 212, 191, 0.1);
-    border: 1px solid rgba(45, 212, 191, 0.28);
-    padding: 2px 9px; border-radius: 999px; letter-spacing: 0;
-  }
-  nav.links { display: flex; align-items: center; gap: 26px; font-size: 14.5px; color: var(--muted); }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+  .brand img { width: 28px; height: 28px; }
+  nav.links { display: flex; align-items: center; gap: 24px; font-size: 14.5px; color: var(--muted); }
   nav.links a { transition: color 0.15s; }
   nav.links a:hover { color: var(--text); }
   .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 14.5px; font-weight: 600; padding: 9px 18px;
-    border-radius: 9px; transition: all 0.18s; cursor: pointer; border: 1px solid transparent;
+    display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600;
+    padding: 8px 16px; border-radius: 9px; transition: all 0.18s;
+    border: 1px solid var(--border-strong); background: rgba(148, 163, 184, 0.05); color: var(--text);
   }
-  .btn-primary {
-    background: linear-gradient(135deg, #2dd4bf, #0d9488);
-    color: #04211d; box-shadow: 0 4px 22px rgba(45, 212, 191, 0.28);
-  }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 7px 28px rgba(45, 212, 191, 0.4); }
-  .btn-ghost { border-color: var(--border-strong); color: var(--text); background: rgba(148, 163, 184, 0.05); }
-  .btn-ghost:hover { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
+  .btn:hover { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
+  .btn-accent { border-color: transparent; background: linear-gradient(135deg, #2dd4bf, #0d9488); color: #04211d; box-shadow: 0 4px 22px rgba(45, 212, 191, 0.25); }
+  .btn-accent:hover { transform: translateY(-1px); box-shadow: 0 7px 28px rgba(45, 212, 191, 0.38); }
 
-  /* ---------- hero ---------- */
-  .hero { padding: 84px 0 64px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .hero { padding: 84px 0 46px; text-align: left; }
   .eyebrow {
-    display: inline-flex; align-items: center; gap: 10px;
-    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em;
-    color: var(--mint); background: rgba(45, 212, 191, 0.08);
-    border: 1px solid rgba(45, 212, 191, 0.22); border-radius: 999px; padding: 6px 14px;
-    text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 9px; font-family: var(--mono);
+    font-size: 12.5px; letter-spacing: 0.06em; color: var(--mint);
+    background: rgba(45, 212, 191, 0.08); border: 1px solid rgba(45, 212, 191, 0.22);
+    border-radius: 999px; padding: 6px 14px; text-transform: uppercase;
   }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
-  h1 {
-    font-size: clamp(40px, 5.4vw, 62px); line-height: 1.06;
-    letter-spacing: -0.035em; font-weight: 800; margin: 26px 0 20px;
-  }
+  h1 { font-size: clamp(36px, 5vw, 54px); line-height: 1.08; letter-spacing: -0.035em; font-weight: 800; margin: 24px 0 18px; }
   .grad {
     background: linear-gradient(100deg, var(--mint) 10%, var(--teal) 55%, #4ade80 100%);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .lede { font-size: 18px; color: var(--muted); max-width: 54ch; }
-  .lede strong { color: var(--text); font-weight: 600; }
-  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; }
-  .cmd-bar {
-    margin-top: 30px; display: flex; align-items: center; gap: 12px;
-    background: #0a0f1a; border: 1px solid var(--border);
-    border-radius: 11px; padding: 13px 16px; max-width: 470px;
-    font-family: var(--mono); font-size: 14.5px;
-  }
-  .cmd-bar .prompt { color: var(--green); user-select: none; }
-  .cmd-bar .cmd { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .copy {
-    margin-left: auto; background: rgba(148, 163, 184, 0.1); border: 1px solid var(--border);
-    color: var(--muted); font-size: 12px; font-family: var(--mono);
-    padding: 5px 11px; border-radius: 7px; cursor: pointer; transition: all 0.15s; flex-shrink: 0;
-  }
-  .copy:hover { color: var(--text); border-color: var(--border-strong); }
-  .copy.ok { color: var(--green); border-color: rgba(74, 222, 128, 0.4); }
-  .engines { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 34px; }
-  .engine {
-    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
-    border: 1px solid var(--border); background: var(--panel);
-    padding: 5px 13px; border-radius: 999px; transition: all 0.15s;
-  }
-  .engine:hover { color: var(--mint); border-color: rgba(45, 212, 191, 0.35); }
+  .lede { font-size: 17.5px; color: var(--muted); max-width: 62ch; }
 
-  /* ---------- terminal ---------- */
-  .terminal {
-    background: linear-gradient(180deg, #0c1220, #0a0f1a);
-    border: 1px solid var(--border); border-radius: 14px;
-    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0,0,0,0.3);
-    overflow: hidden;
-  }
-  .term-bar {
-    display: flex; align-items: center; gap: 7px; padding: 12px 16px;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.1); background: rgba(148, 163, 184, 0.04);
-  }
-  .term-bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
-  .term-bar i:nth-child(1) { background: #ff5f57; }
-  .term-bar i:nth-child(2) { background: #febc2e; }
-  .term-bar i:nth-child(3) { background: #28c840; }
-  .term-title { margin-left: 10px; font-family: var(--mono); font-size: 12px; color: var(--faint); }
-  .term-body { padding: 20px 22px 24px; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; overflow-x: auto; }
-  .term-body .line { white-space: pre; }
-  .t-prompt { color: var(--green); }
-  .t-cmd { color: #f1f5f9; }
-  .t-out { color: var(--muted); }
-  .t-hdr { color: var(--mint); }
-  .t-err { color: var(--red); }
-  .t-note { color: var(--faint); }
-  .t-ok { color: var(--green); }
-  .t-gap { display: block; height: 12px; }
-
-  /* ---------- sections ---------- */
-  section { padding: 88px 0; position: relative; z-index: 1; }
-  .label {
+  .section-label {
     font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--teal); margin-bottom: 14px;
+    text-transform: uppercase; color: var(--teal); margin: 34px 0 18px;
   }
-  h2 { font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -0.03em; font-weight: 750; line-height: 1.15; }
-  .sub { color: var(--muted); font-size: 17px; margin-top: 14px; max-width: 62ch; }
 
-  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  /* featured card */
+  .featured {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 26px; align-items: center;
+    background: linear-gradient(150deg, rgba(45, 212, 191, 0.1), rgba(45, 212, 191, 0.02));
+    border: 1px solid rgba(45, 212, 191, 0.32); border-radius: 17px;
+    padding: 30px 32px; transition: all 0.2s;
+  }
+  .featured:hover { border-color: rgba(45, 212, 191, 0.55); transform: translateY(-3px); box-shadow: 0 18px 44px rgba(0, 0, 0, 0.35); }
+  .featured .flogo { width: 64px; height: 64px; }
+  .featured h2 { font-size: 24px; letter-spacing: -0.02em; font-weight: 750; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .featured p { color: var(--muted); font-size: 15px; margin-top: 7px; max-width: 62ch; }
+  .featured .actions { display: flex; flex-direction: column; gap: 10px; min-width: 150px; }
+  .tag {
+    font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+    padding: 3px 10px; border-radius: 999px; text-transform: uppercase;
+  }
+  .tag-go { color: var(--mint); background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.3); }
+  .tag-page { color: var(--green); background: rgba(74, 222, 128, 0.09); border: 1px solid rgba(74, 222, 128, 0.3); }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 18px; }
   .card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 15px;
-    padding: 26px 24px; transition: all 0.2s;
+    padding: 26px 24px; transition: all 0.2s; display: flex; flex-direction: column;
   }
   .card:hover { background: var(--panel-hover); border-color: rgba(45, 212, 191, 0.3); transform: translateY(-3px); }
   .card .ico {
-    width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
-    background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.22); margin-bottom: 17px;
+    width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.22); margin-bottom: 16px;
   }
-  .card .ico svg { width: 20px; height: 20px; stroke: var(--mint); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-  .card h3 { font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; margin-bottom: 8px; }
-  .card p { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
-  .card p code { font-size: 13px; color: var(--mint); background: rgba(45,212,191,0.08); padding: 1px 5px; border-radius: 5px; }
+  .card .ico svg { width: 21px; height: 21px; stroke: var(--mint); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { font-size: 17px; font-weight: 680; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card p { font-size: 14.5px; color: var(--muted); margin: 8px 0 18px; flex: 1; }
+  .lang { font-family: var(--mono); font-size: 11.5px; color: var(--faint); border: 1px solid var(--border); padding: 2px 9px; border-radius: 999px; font-weight: 500; }
+  .card .go { font-size: 14px; font-weight: 600; color: var(--mint); display: inline-flex; gap: 6px; align-items: center; }
+  .card .go:hover { color: var(--green); }
 
-  /* ---------- steps ---------- */
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
-  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 26px 24px; }
-  .step .num {
-    font-family: var(--mono); font-size: 13px; color: var(--teal);
-    border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.07);
-    width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
-    margin-bottom: 16px; font-weight: 600;
-  }
-  .step h3 { font-size: 16.5px; font-weight: 650; margin-bottom: 8px; }
-  .step p { font-size: 14.5px; color: var(--muted); margin-bottom: 16px; }
-  .snippet {
-    background: #0a0f1a; border: 1px solid rgba(148, 163, 184, 0.12);
-    border-radius: 10px; padding: 13px 15px; font-family: var(--mono);
-    font-size: 13px; line-height: 1.7; overflow-x: auto; color: var(--muted);
-  }
-  .snippet .t-prompt { color: var(--green); }
-  .snippet .t-cmd { color: var(--text); }
-
-  /* ---------- exit codes ---------- */
-  .codes { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; margin-top: 52px; align-items: start; }
-  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; }
-  th, td { text-align: left; padding: 14px 20px; font-size: 14.5px; }
-  thead th {
-    font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
-    color: var(--faint); background: rgba(148, 163, 184, 0.05); border-bottom: 1px solid var(--border);
-  }
-  tbody tr { border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
-  tbody tr:last-child { border-bottom: none; }
-  td.rc { font-family: var(--mono); font-weight: 700; width: 74px; }
-  .rc0 { color: var(--green); } .rc1 { color: var(--amber); } .rc2 { color: var(--red); } .rc3 { color: var(--muted); }
-  td.desc { color: var(--muted); }
-  .callout {
-    background: linear-gradient(160deg, rgba(45, 212, 191, 0.09), rgba(45, 212, 191, 0.02));
-    border: 1px solid rgba(45, 212, 191, 0.3); border-radius: 15px; padding: 26px 26px;
-  }
-  .callout h3 { font-size: 17px; margin-bottom: 10px; color: var(--mint); }
-  .callout p { font-size: 14.5px; color: var(--muted); margin-bottom: 12px; }
-  .callout p:last-child { margin-bottom: 0; }
-  .callout code { color: var(--red); background: rgba(248, 113, 113, 0.1); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
-
-  /* ---------- install ---------- */
-  .installs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
-  .inst { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 24px; }
-  .inst h3 { font-size: 15.5px; font-weight: 650; margin-bottom: 4px; display: flex; align-items: center; gap: 9px; }
-  .inst .hint { font-size: 13px; color: var(--faint); margin-bottom: 15px; }
-  .inst .cmd-bar { margin-top: 0; max-width: none; padding: 11px 13px; font-size: 13.5px; border-radius: 9px; }
-
-  /* ---------- footer ---------- */
-  footer { border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 44px 0 54px; position: relative; z-index: 1; }
+  footer { border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 40px 0 50px; margin-top: 70px; position: relative; z-index: 1; }
   .foot { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
-  .foot .brand { font-size: 16px; }
-  .foot .brand img { width: 24px; height: 24px; }
   .foot .meta { font-size: 13.5px; color: var(--faint); }
-  .foot nav { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+  .foot nav { display: flex; gap: 22px; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
   .foot nav a:hover { color: var(--mint); }
 
-  /* ---------- reveal ---------- */
   .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
   .reveal.in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce) {
     .reveal { opacity: 1; transform: none; transition: none; }
     html { scroll-behavior: auto; }
   }
-
-  /* ---------- responsive ---------- */
-  @media (max-width: 1000px) {
-    .hero { grid-template-columns: 1fr; padding-top: 60px; gap: 44px; }
-    .features, .steps, .installs { grid-template-columns: repeat(2, 1fr); }
-    .codes { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 660px) {
+  @media (max-width: 880px) {
+    .cards { grid-template-columns: 1fr; }
+    .featured { grid-template-columns: 1fr; gap: 18px; }
+    .featured .actions { flex-direction: row; }
     nav.links a:not(.btn) { display: none; }
-    .features, .steps, .installs { grid-template-columns: 1fr; }
-    section { padding: 64px 0; }
-    .cmd-bar { max-width: 100%; }
-    .term-body { font-size: 12px; }
   }
 </style>
 </head>
@@ -275,271 +156,82 @@
 
 <header class="nav">
   <div class="wrap nav-inner">
-    <a class="brand" href="#">
-      <img src="logo.svg" alt="dbq logo">
-      dbq <span class="chip">v0.2.0</span>
-    </a>
+    <a class="brand" href="#"><img src="logo.svg" alt="logo"> Rio Liu</a>
     <nav class="links">
-      <a href="#features">Features</a>
-      <a href="#how">How it works</a>
-      <a href="#install">Install</a>
-      <a href="https://github.com/rioliu/dbq">GitHub&nbsp;↗</a>
-      <a class="btn btn-primary" href="https://github.com/rioliu/dbq/releases/latest">Download</a>
+      <a href="dbq/">dbq</a>
+      <a href="https://github.com/rioliu">GitHub&nbsp;↗</a>
+      <a class="btn" href="https://rioliu-rh.github.io/">Red Hat page ↗</a>
     </nav>
   </div>
 </header>
 
-<main>
-  <!-- ================= HERO ================= -->
-  <div class="wrap">
-    <section class="hero">
-      <div>
-        <span class="eyebrow"><span class="dot"></span> MIT · read-only by default</span>
-        <h1>Query five databases.<br><span class="grad">Break nothing.</span></h1>
-        <p class="lede">
-          <strong>dbq</strong> is a multi-database CLI with guardrails baked in:
-          credentials live in a <strong>mode-600 profile file</strong>, every statement passes a
-          <strong>two-layer read-only guard</strong>, and exit codes are a contract your
-          scripts can trust. Built for humans — safe to hand to agents.
-        </p>
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow"><span class="dot"></span> open source · github.com/rioliu</span>
+    <h1>Tools I build,<br><span class="grad">guides I keep.</span></h1>
+    <p class="lede">
+      A small set of projects I actively maintain — a guarded database CLI,
+      a career CLI in Go, and a test automation framework — plus write-ups
+      from my Red Hat open-source contributions. Pick a project to get started.
+    </p>
+  </section>
 
-        <div class="cmd-bar">
-          <span class="prompt">$</span>
-          <span class="cmd" id="hero-cmd">brew install rioliu/tap/dbq</span>
-          <button class="copy" data-copy="brew install rioliu/tap/dbq">copy</button>
-        </div>
+  <p class="section-label">flagship</p>
+  <a class="featured reveal" href="dbq/">
+    <img class="flogo" src="logo.svg" alt="dbq logo">
+    <div>
+      <h2>dbq <span class="tag tag-go">Go</span> <span class="tag tag-page">has its own page →</span></h2>
+      <p>Guarded multi-database CLI — credential profiles in, query results out.
+         Read-only by default with two-layer guardrails across MySQL, PostgreSQL,
+         SQL Server, SQLite and Oracle. Built for humans, safe for agents.</p>
+    </div>
+    <div class="actions">
+      <span class="btn btn-accent">Visit dbq page →</span>
+      <span class="btn">GitHub ↗</span>
+    </div>
+  </a>
 
-        <div class="cta-row">
-          <a class="btn btn-primary" href="https://github.com/rioliu/dbq/releases/latest">⬇ &nbsp;Download v0.2.0</a>
-          <a class="btn btn-ghost" href="https://github.com/rioliu/dbq">★ &nbsp;Star on GitHub</a>
-        </div>
+  <p class="section-label">projects</p>
+  <div class="cards">
+    <div class="card reveal">
+      <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg></div>
+      <h3>liepin-cli-go <span class="lang">Go</span></h3>
+      <p>Go implementation of the Liepin CLI tool — resume management, job search,
+         and job applications, straight from your terminal.</p>
+      <a class="go" href="https://github.com/rioliu/liepin-cli-go">View on GitHub →</a>
+    </div>
 
-        <div class="engines">
-          <span class="engine">MySQL</span>
-          <span class="engine">PostgreSQL</span>
-          <span class="engine">SQL Server</span>
-          <span class="engine">SQLite</span>
-          <span class="engine">Oracle</span>
-        </div>
-      </div>
+    <div class="card reveal">
+      <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 3h6"/><path d="M10 3v6.5L4.8 18a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3L14 9.5V3"/><path d="M7.5 15h9"/></svg></div>
+      <h3>easytest <span class="lang">Java</span></h3>
+      <p>Quick-start framework for automation test projects, focused on REST API
+         and Selenium tests, with a documented common design.</p>
+      <a class="go" href="https://github.com/rioliu/easytest">View on GitHub →</a>
+    </div>
 
-      <div class="terminal" aria-hidden="true">
-        <div class="term-bar"><i></i><i></i><i></i><span class="term-title">prod — dbq</span></div>
-        <div class="term-body">
-<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">dbq query prod "SELECT id, status FROM orders LIMIT 3"</span></span>
-<span class="line t-hdr">id  status</span>
-<span class="line t-out">--  --------</span>
-<span class="line t-out">12  paid</span>
-<span class="line t-out">13  shipped</span>
-<span class="line t-out">14  pending</span>
-<span class="line"><span class="t-gap"></span></span>
-<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">dbq query prod "DELETE FROM orders"</span></span>
-<span class="line t-err">dbq: ERROR: guard: statement type 'delete' is not allowed on a read-only profile</span>
-<span class="line t-note">dbq: note: this is a hard guardrail. Do not retry variations to</span>
-<span class="line t-note">bypass it; ask a human if the write is genuinely required.</span>
-<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">echo $?</span></span>
-<span class="line t-err">2</span>
-<span class="line"><span class="t-gap"></span></span>
-<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">dbq query prod --format json "SELECT ..." | jq '.[0].id'</span></span>
-<span class="line t-ok">12</span>
-        </div>
-      </div>
-    </section>
+    <div class="card reveal">
+      <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14.5 14.5 0 0 1 0 18"/><path d="M12 3a14.5 14.5 0 0 0 0 18"/></svg></div>
+      <h3>Red Hat OSS <span class="lang">write-ups</span></h3>
+      <p>Guides and notes from my Red Hat open-source contributions — repos,
+         workflows and things worth keeping in one place.</p>
+      <a class="go" href="https://rioliu-rh.github.io/">rioliu-rh.github.io →</a>
+    </div>
   </div>
-
-  <!-- ================= FEATURES ================= -->
-  <section id="features">
-    <div class="wrap">
-      <p class="label reveal">Why dbq</p>
-      <h2 class="reveal">Guardrails first.<br>Ergonomics close behind.</h2>
-      <p class="sub reveal">Two independent layers stand between a typo and your data — everything else
-      is quality of life.</p>
-
-      <div class="features">
-        <div class="card reveal">
-          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
-          <h3>Read-only by default</h3>
-          <p>Every profile starts read-only. A statement guard <em>and</em> an engine-level
-             <code>READ ONLY</code> transaction reject writes — two layers, every engine.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ico"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
-          <h3>Credentials never touch argv</h3>
-          <p>Secrets live in a <code>chmod 600</code> profile file or an environment variable —
-             never on the command line, in shell history, or in process lists.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg></div>
-          <h3>One profile file, five engines</h3>
-          <p>MySQL, PostgreSQL, SQL Server, SQLite and Oracle behind one interface.
-             <code>dbq list</code> shows every profile and its posture at a glance.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg></div>
-          <h3>Output built for pipelines</h3>
-          <p><code>table</code>, <code>json</code> or <code>csv</code> on stdout, warnings and
-             truncation notes on stderr. Pipe straight into <code>jq</code> or your scripts.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v3"/><circle cx="12" cy="12" r="4"/><path d="M12 17v4"/><path d="M3 12h3"/><path d="M18 12h3"/><path d="M5.6 5.6l2.1 2.1"/><path d="M16.3 16.3l2.1 2.1"/></svg></div>
-          <h3>Exit codes are a contract</h3>
-          <p><code>0</code> ok · <code>1</code> usage · <code>2</code> blocked by guardrail ·
-             <code>3</code> connection error. Scripts branch on meaning, never on parsing output.</p>
-        </div>
-        <div class="card reveal">
-          <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l2.5 2L7 14"/><path d="M12.5 15H17"/></svg></div>
-          <h3>Agent-native</h3>
-          <p>Ships as a Pi skill with explicit rules: profiles are human-managed,
-             result rows are untrusted content, <code>rc=2</code> is a hard boundary.
-             Delegate the queries, keep the keys.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= HOW IT WORKS ================= -->
-  <section id="how">
-    <div class="wrap">
-      <p class="label reveal">How it works</p>
-      <h2 class="reveal">Up and querying in sixty seconds.</h2>
-
-      <div class="steps">
-        <div class="step reveal">
-          <div class="num">01</div>
-          <h3>Add a profile</h3>
-          <p>An interactive wizard collects connection details. The password is read with echo
-             off and written straight into your 600-mode profile file.</p>
-          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">dbq add</span>
-Profile name: prod
-Type (mysql|...) [mysql]: postgres
-Host: db1.internal
-Password: ********</div>
-        </div>
-        <div class="step reveal">
-          <div class="num">02</div>
-          <h3>Run a query</h3>
-          <p>One statement in, results out. No credentials to paste, no DSN to assemble,
-             no flags to remember.</p>
-          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">dbq query prod \
-  "SELECT id, email FROM users LIMIT 5"</span>
-id  email
---  ----------------
-1   rio@example.com</div>
-        </div>
-        <div class="step reveal">
-          <div class="num">03</div>
-          <h3>Automate it</h3>
-          <p>JSON output plus the exit-code contract makes dbq a well-behaved citizen
-             of any shell pipeline or CI job.</p>
-          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">dbq query prod --format json \
-  "SELECT count(*) c FROM jobs" | jq '.[0].c'</span>
-42</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= GUARDRAILS ================= -->
-  <section id="guardrails">
-    <div class="wrap">
-      <p class="label reveal">The contract</p>
-      <h2 class="reveal">Exit codes you can build on.</h2>
-      <p class="sub reveal">Machine-readable outcomes, documented and stable — the foundation
-      for scripts, CI checks and agent workflows alike.</p>
-
-      <div class="codes">
-        <table class="reveal">
-          <thead><tr><th>rc</th><th>meaning</th></tr></thead>
-          <tbody>
-            <tr><td class="rc rc0">0</td><td class="desc">success — results on stdout</td></tr>
-            <tr><td class="rc rc1">1</td><td class="desc">usage or configuration error</td></tr>
-            <tr><td class="rc rc2">2</td><td class="desc">statement blocked by guardrail — do not retry variations</td></tr>
-            <tr><td class="rc rc3">3</td><td class="desc">connection or query error</td></tr>
-          </tbody>
-        </table>
-
-        <div class="callout reveal">
-          <h3>rc=2 is a hard boundary</h3>
-          <p>When dbq refuses a statement, the refusal happens in two independent places:
-             a syntactic statement guard, and the database engine itself refusing writes
-             inside a <code>READ ONLY</code> transaction.</p>
-          <p>A read-only profile cannot be talked into a <code>DELETE</code> — not by a typo,
-             not by a clever rephrase, not by an agent having a bad day. Need a real write?
-             A human flips the profile, on purpose, in the wizard.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= INSTALL ================= -->
-  <section id="install">
-    <div class="wrap">
-      <p class="label reveal">Install</p>
-      <h2 class="reveal">Pick your channel.</h2>
-      <p class="sub reveal">Static binaries for Linux, macOS and Windows — or build from source.</p>
-
-      <div class="installs">
-        <div class="inst reveal">
-          <h3>Homebrew</h3>
-          <p class="hint">macOS &amp; Linux · prebuilt</p>
-          <div class="cmd-bar">
-            <span class="prompt">$</span>
-            <span class="cmd">brew install rioliu/tap/dbq</span>
-            <button class="copy" data-copy="brew install rioliu/tap/dbq">copy</button>
-          </div>
-        </div>
-        <div class="inst reveal">
-          <h3>Go</h3>
-          <p class="hint">requires Go ≥ 1.26</p>
-          <div class="cmd-bar">
-            <span class="prompt">$</span>
-            <span class="cmd">go install github.com/rioliu/dbq@latest</span>
-            <button class="copy" data-copy="go install github.com/rioliu/dbq@latest">copy</button>
-          </div>
-        </div>
-        <div class="inst reveal">
-          <h3>Binary release</h3>
-          <p class="hint">amd64 &amp; arm64 · sha256 checksums</p>
-          <div class="cmd-bar">
-            <span class="prompt">$</span>
-            <span class="cmd">…/releases/latest</span>
-            <a class="copy" href="https://github.com/rioliu/dbq/releases/latest">download ↓</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
 </main>
 
 <footer>
   <div class="wrap foot">
-    <div>
-      <a class="brand" href="https://github.com/rioliu/dbq"><img src="logo.svg" alt="dbq logo"> dbq</a>
-      <p class="meta" style="margin-top:8px">MIT © 2026 Xiaozheng(Rio) Liu · guarded database access</p>
-    </div>
+    <p class="meta">© 2026 Xiaozheng(Rio) Liu · github.com/rioliu</p>
     <nav>
-      <a href="https://github.com/rioliu/dbq">GitHub</a>
-      <a href="https://github.com/rioliu/dbq/releases">Releases</a>
-      <a href="https://github.com/rioliu/dbq/blob/main/SPEC.md">SPEC</a>
+      <a href="dbq/">dbq</a>
+      <a href="https://github.com/rioliu">GitHub</a>
+      <a href="https://rioliu-rh.github.io/">Red Hat page</a>
       <a href="https://github.com/rioliu/homebrew-tap">Homebrew tap</a>
     </nav>
   </div>
 </footer>
 
 <script>
-  // copy-to-clipboard for command bars
-  document.querySelectorAll(".copy[data-copy]").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      navigator.clipboard.writeText(btn.getAttribute("data-copy")).then(function () {
-        var old = btn.textContent;
-        btn.textContent = "copied ✓";
-        btn.classList.add("ok");
-        setTimeout(function () { btn.textContent = old; btn.classList.remove("ok"); }, 1600);
-      });
-    });
-  });
-
-  // gentle reveal on scroll
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
       if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
