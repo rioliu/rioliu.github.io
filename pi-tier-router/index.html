@@ -427,6 +427,16 @@
         </div>
         <div class="step reveal">
           <div class="num">01</div>
+          <h3>Reuse what the store knows</h3>
+          <p>Abstained prompts hit the <strong>decision store</strong> first: past chain verdicts for
+             similar prompts — matched by signal-profile overlap or trigram sketch, settled by a
+             k-NN vote — are reused with <strong>zero model calls</strong>. It lives next to the
+             extension and is removed with it.</p>
+          <div class="snippet">[auto-router] memory flash (3 neighbours, 100% agree)
+<span class="t-note">ring: 2 000 entries · ~285 KB · never grows with age</span></div>
+        </div>
+        <div class="step reveal">
+          <div class="num">02</div>
           <h3>Rate only what local declined</h3>
           <p>An abstained prompt goes to the flash model, which returns a rating plus a confidence as
              JSON. The call is bounded at <strong>10 s</strong> with minimal reasoning, so it never
@@ -435,7 +445,7 @@
 <span class="t-note">self rated=flash conf=0.95</span></div>
         </div>
         <div class="step reveal">
-          <div class="num">02</div>
+          <div class="num">03</div>
           <h3>Apply the bar</h3>
           <p>Confidence ≥ 0.8 is final. Unsure → ask Jev if configured. Neither can answer → keep the
              current model and <strong>stop routing</strong>; nothing is guessed.</p>
@@ -444,7 +454,7 @@ unsure     → Jev (optional)
 no answer  → <span class="t-note">keep current model</span></div>
         </div>
         <div class="step reveal">
-          <div class="num">03</div>
+          <div class="num">04</div>
           <h3>Serve the whole run</h3>
           <p>The decision covers every request of that agent run — tool follow-ups included — and the
              <strong>next prompt decides again</strong>. Compaction summaries run on flash.</p>
