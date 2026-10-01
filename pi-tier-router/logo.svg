@@ -1,13 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="pi-tier-router">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="pi-tier-router">
   <defs>
-    <linearGradient id="g" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#2dd4bf"/>
-      <stop offset="1" stop-color="#5eead4"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e293b"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="tier" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#2dd4bf"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="#0b1120"/>
-  <path d="M16 46 C 27 46, 30 20, 44 20" fill="none" stroke="url(#g)" stroke-width="3.4" stroke-linecap="round"/>
-  <path d="M39 15l6 4-6 5" fill="none" stroke="url(#g)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="15" cy="47" r="4.6" fill="none" stroke="#94a3b8" stroke-width="3"/>
-  <circle cx="46" cy="19" r="6.2" fill="url(#g)"/>
+
+  <!-- rounded square background (same shape family as dbq) -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- tiers: flash -> mid -> pro -->
+  <rect x="22" y="68" width="24" height="36" rx="11" fill="#2dd4bf" opacity="0.4"/>
+  <rect x="54" y="48" width="24" height="56" rx="11" fill="#2dd4bf" opacity="0.65"/>
+  <rect x="86" y="28" width="24" height="76" rx="11" fill="url(#tier)"/>
+
+  <!-- route: escalate -->
+  <path d="M24 60 L56 28" fill="none" stroke="#4ade80" stroke-width="7" stroke-linecap="round"/>
+  <path d="M44 28 H56 V40" fill="none" stroke="#4ade80" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
