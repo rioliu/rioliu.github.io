@@ -467,8 +467,8 @@ pro    41k tok    $0.12
              extension is loaded and ignored entirely when it is not. Because it travels with the
              code, <strong>uninstalling takes it with it</strong>, and <code>pi update</code> keeps it
              (verified for npm and git sources). An older copy in
-             <code>~/.pi/agent/extensions/</code> is still read until the wizard saves once, which
-             supersedes it.</p>
+             <code>~/.pi/agent/extensions/</code> is moved next to the extension the first time it
+             loads, so uninstalling leaves nothing behind.</p>
           <div class="cmd-bar" style="margin-top:12px">
             <span class="prompt">$</span>
             <span class="cmd">/auto-router</span>
