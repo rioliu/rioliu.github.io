@@ -313,8 +313,8 @@
 
         <div class="cmd-bar">
           <span class="prompt">$</span>
-          <span class="cmd" id="hero-cmd">pi install git:github.com/rioliu/pi-jev-extension</span>
-          <button class="copy" data-copy="pi install git:github.com/rioliu/pi-jev-extension">copy</button>
+          <span class="cmd" id="hero-cmd">pi install npm:pi-jev-extension</span>
+          <button class="copy" data-copy="pi install npm:pi-jev-extension">copy</button>
         </div>
 
         <div class="cta-row">
@@ -509,10 +509,19 @@ questions:
   <section id="install">
     <div class="wrap">
       <p class="label reveal">Install</p>
-      <h2 class="reveal">Two commands.</h2>
+      <h2 class="reveal">Three commands.</h2>
       <p class="sub reveal">Pi loads TypeScript directly — there is no build step.</p>
 
       <div class="installs">
+        <div class="inst reveal">
+          <h3>From npm</h3>
+          <p class="hint">published package, listed in the Pi gallery</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">pi install npm:pi-jev-extension</span>
+            <button class="copy" data-copy="pi install npm:pi-jev-extension">copy</button>
+          </div>
+        </div>
         <div class="inst reveal">
           <h3>Pi package</h3>
           <p class="hint">from GitHub</p>
