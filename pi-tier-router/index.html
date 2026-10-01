@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>pi-tier-router — flash/pro model tiering for Pi agents</title>
-<meta name="description" content="Pi extension that routes each session between a cheap flash model and a strong pro model by issue difficulty - Claude Code haiku/sonnet/opus tiering, config-driven for any model family.">
+<meta name="description" content="Pi extension that routes every prompt between a cheap flash model and a strong pro model - decided locally first, Claude Code haiku/sonnet/opus tiering, config-driven for any model family.">
 <meta property="og:title" content="pi-tier-router — flash/pro model tiering for Pi agents">
-<meta property="og:description" content="Routine work runs on the cheap model; only genuinely hard issues escalate. Rated once per session, config-driven for any model family, Jev optional.">
+<meta property="og:description" content="Routine work runs on the cheap model; only genuinely hard issues escalate. Decided per prompt, locally first, config-driven for any model family, Jev optional.">
 <meta property="og:url" content="https://rioliu.github.io/pi-tier-router/">
 <meta property="og:type" content="website">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
@@ -338,16 +338,14 @@
         <div class="term-bar"><i></i><i></i><i></i><span class="term-title">router/auto — routing</span></div>
         <div class="term-body">
 <span class="line"><span class="t-prompt">$</span> <span class="t-cmd">pi "fix the typo in README"</span></span>
-<span class="line t-note">[auto-router] self rated=flash conf=0.95</span>
-<span class="line t-note">[auto-router] decided self/flash in 1431ms</span>
+<span class="line t-note">[auto-router] local flash conf=0.97 via small-edit+short</span>
 <span class="line t-ok">→ mimo-v2.6-flash</span>
 <span class="line t-gap"></span>
 <span class="line"><span class="t-prompt">$</span> <span class="t-cmd">pi "deadlock + leak + migration plan"</span></span>
-<span class="line t-note">[auto-router] self rated=pro conf=0.92</span>
-<span class="line t-note">[auto-router] decided self/pro in 1432ms</span>
+<span class="line t-note">[auto-router] local pro conf=0.97 via concurrency+architecture</span>
 <span class="line t-ok">→ mimo-v2.6-pro</span>
 <span class="line t-gap"></span>
-<span class="line t-note">rated once per session — later turns keep the cache</span>
+<span class="line t-note">one prompt, one decision — no model call unless the local layer abstains</span>
         </div>
       </div>
     </section>
@@ -363,6 +361,12 @@
 
       <div class="features">
         <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg></div>
+          <h3>Local first</h3>
+          <p>Stack traces, race conditions, greetings, typos — <strong>decided in 0 ms with zero
+             tokens</strong>. Only prompts the local layer can't read cleanly ever reach a model.</p>
+        </div>
+        <div class="card reveal">
           <div class="ico"><svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></div>
           <h3>Flash is the default</h3>
           <p>The flash model must be <strong>confident (≥ 0.8)</strong> before anything escalates. Routine
@@ -370,9 +374,9 @@
         </div>
         <div class="card reveal">
           <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-          <h3>Rated once per session</h3>
-          <p>The decision is stored as router state on the session branch, so later turns reuse it:
-             <strong>no repeated rating calls</strong> and the prompt cache stays warm.</p>
+          <h3>One prompt, one decision</h3>
+          <p>Decided when the prompt arrives and reused for its whole agent run — tool loop included —
+             with <strong>no repeated rating calls</strong>. The next prompt decides again.</p>
         </div>
         <div class="card reveal">
           <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12h6"/><path d="M11 12l4-6h4"/><path d="M11 12l4 6h4"/><circle cx="4" cy="12" r="2"/></svg></div>
@@ -407,14 +411,24 @@
   <section id="how">
     <div class="wrap">
       <p class="label reveal">How it works</p>
-      <h2 class="reveal">One rating, then it stays out of the way.</h2>
+      <h2 class="reveal">Decide per prompt.<br>Locally first.</h2>
 
       <div class="steps">
         <div class="step reveal">
+          <div class="num">00</div>
+          <h3>Read the prompt locally</h3>
+          <p>When the prompt arrives, a feature router reads it: <strong>0 ms, zero tokens,
+             deterministic</strong>. Clear signals decide on the spot; mixed or missing signals
+             abstain and hand over to the chain below.</p>
+          <div class="snippet">$ pi "kill the race in the queue"
+<span class="t-note">local pro conf=0.93 via concurrency</span></div>
+        </div>
+        <div class="step reveal">
           <div class="num">01</div>
-          <h3>Rate the first message</h3>
-          <p>The flash model returns a rating plus a confidence as JSON. The call is bounded at
-             <strong>10 s</strong> with minimal reasoning, so it never holds up a turn.</p>
+          <h3>Rate only what local declined</h3>
+          <p>An abstained prompt goes to the flash model, which returns a rating plus a confidence as
+             JSON. The call is bounded at <strong>10 s</strong> with minimal reasoning, so it never
+             holds up a turn.</p>
           <div class="snippet">{"rating":"flash","confidence":0.95}
 <span class="t-note">self rated=flash conf=0.95</span></div>
         </div>
@@ -429,9 +443,9 @@ no answer  → <span class="t-note">keep current model</span></div>
         </div>
         <div class="step reveal">
           <div class="num">03</div>
-          <h3>Stay there</h3>
-          <p>The result is stored as router state on the session branch, so every later turn — including
-             tool follow-ups — uses the same model. Compaction summaries run on flash.</p>
+          <h3>Serve the whole run</h3>
+          <p>The decision covers every request of that agent run — tool follow-ups included — and the
+             <strong>next prompt decides again</strong>. Compaction summaries run on flash.</p>
           <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">/session</span>
 flash  8.2k tok   $0.00
 pro    41k tok    $0.12
