@@ -96,7 +96,8 @@
   .btn-ghost:hover { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
 
   /* ---------- hero ---------- */
-  .hero { padding: 84px 0 64px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .hero { padding: 84px 0 64px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 56px; align-items: center; }
+  .hero > * { min-width: 0; }
   .eyebrow {
     display: inline-flex; align-items: center; gap: 10px;
     font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em;
@@ -232,11 +233,12 @@
   .callout code { color: var(--red); background: rgba(248, 113, 113, 0.1); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
 
   /* ---------- install ---------- */
-  .installs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
-  .inst { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 24px; }
+  .installs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 52px; }
+  .inst { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 24px; min-width: 0; }
   .inst h3 { font-size: 15.5px; font-weight: 650; margin-bottom: 4px; display: flex; align-items: center; gap: 9px; }
   .inst .hint { font-size: 13px; color: var(--faint); margin-bottom: 15px; }
   .inst .cmd-bar { margin-top: 0; max-width: none; padding: 11px 13px; font-size: 13.5px; border-radius: 9px; }
+  .inst .cmd { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
 
   /* ---------- footer ---------- */
   footer { border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 44px 0 54px; position: relative; z-index: 1; }
@@ -257,15 +259,17 @@
 
   /* ---------- responsive ---------- */
   @media (max-width: 1000px) {
-    .hero { grid-template-columns: 1fr; padding-top: 60px; gap: 44px; }
-    .features, .steps, .installs { grid-template-columns: repeat(2, 1fr); }
+    .hero { grid-template-columns: minmax(0, 1fr); padding-top: 60px; gap: 44px; }
+    .features, .steps, .installs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .codes { grid-template-columns: 1fr; }
   }
   @media (max-width: 660px) {
     nav.links a:not(.btn) { display: none; }
-    .features, .steps, .installs { grid-template-columns: 1fr; }
+    .features, .steps, .installs { grid-template-columns: minmax(0, 1fr); }
     section { padding: 64px 0; }
     .cmd-bar { max-width: 100%; }
+    .cmd-bar .cmd { white-space: normal; overflow-wrap: anywhere; }
+    .codes { overflow-x: auto; }
     .term-body { font-size: 12px; }
   }
 
