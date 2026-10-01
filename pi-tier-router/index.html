@@ -505,8 +505,15 @@ pro    41k tok    $0.12
             <span class="cmd">/auto-router set flash=deepseek/deepseek-v4-flash pro=deepseek/deepseek-v4-pro</span>
             <button class="copy" data-copy="/auto-router set flash=deepseek/deepseek-v4-flash pro=deepseek/deepseek-v4-pro">copy</button>
           </div>
+          <div class="cmd-bar" style="margin-top:8px">
+            <span class="prompt">$</span>
+            <span class="cmd">/auto-router memory</span>
+            <button class="copy" data-copy="/auto-router memory">copy</button>
+          </div>
           <p style="margin-top:12px"><code>/auto-router status</code> prints the resolved pair, the
-             config path and your current default.</p>
+             config path and your current default. <code>/auto-router memory</code> shows the decision
+             store — path, size, reuse — and <code>/auto-router memory reset</code> wipes it; it
+             rebuilds itself from new verdicts.</p>
         </div>
       </div>
     </div>
