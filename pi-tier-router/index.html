@@ -462,9 +462,13 @@ pro    41k tok    $0.12
 
         <div class="callout reveal">
           <h3>Where it lives</h3>
-          <p><code>~/.pi/agent/extensions/auto-router.json</code> — next to the extension, read lazily
-             while it is loaded, and ignored entirely when it is not. Package installs fall back to the
-             same path so the config survives <code>pi update</code>.</p>
+          <p><strong>Next to the extension file</strong> —
+             <code>&lt;install-dir&gt;/extensions/auto-router.json</code> — read lazily while the
+             extension is loaded and ignored entirely when it is not. Because it travels with the
+             code, <strong>uninstalling takes it with it</strong>, and <code>pi update</code> keeps it
+             (verified for npm and git sources). An older copy in
+             <code>~/.pi/agent/extensions/</code> is still read until the wizard saves once, which
+             supersedes it.</p>
           <div class="cmd-bar" style="margin-top:12px">
             <span class="prompt">$</span>
             <span class="cmd">/auto-router</span>
