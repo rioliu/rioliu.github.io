@@ -310,7 +310,9 @@
           agents that turns a judgement call into a typed result. Ask
           <strong>TypeSafe's Jev System One</strong> a question and you get back a
           <strong>choice</strong>, a <strong>score</strong> or a <strong>noul</strong> — a number your
-          code can compare. <strong>Jev never returns prose.</strong> If it is unavailable, rate-limited,
+          code can compare. <strong>Jev never returns prose.</strong> The call runs through
+          <strong>Pi's builtin classifier API</strong> with your <code>TYPESAFE_API_KEY</code>, so its
+          usage lands in your session cost. If Jev is unavailable, rate-limited,
           out of credit or too slow, the same question is handed silently to your session model and the
           result is marked <code>fallback</code>.
         </p>
@@ -338,7 +340,7 @@
         <div class="term-body">
 <span class="line"><span class="t-prompt">{</span></span>
 <span class="line"><span class="t-cmd">"source": "jev",</span></span>
-<span class="line"><span class="t-cmd">"model": "jev-1.13.0",</span></span>
+<span class="line"><span class="t-cmd">"model": "typesafe/jev-latest",</span></span>
 <span class="line"><span class="t-cmd">"answers": {</span></span>
 <span class="line"><span class="t-cmd">  "root":  { "type": "choice", "choice": "dep",</span></span>
 <span class="line"><span class="t-cmd">            "confidence": 0.94, "probabilities":</span></span>
@@ -457,7 +459,7 @@ questions:
             <tr><td class="field">answers[k].type</td><td class="desc">mirrors the question type: <code>choice</code>, <code>score</code> or <code>noul</code></td></tr>
             <tr><td class="field">answers[k].noul</td><td class="desc">P(yes) in 0..1 — there is deliberately <strong>no</strong> <code>confidence</code> field; the probability is the certainty</td></tr>
             <tr><td class="field">answers[k].choice</td><td class="desc">the selected label, with <code>probabilities</code> giving the full distribution over your criteria keys</td></tr>
-            <tr><td class="field">answers[k].score</td><td class="desc">position on your own scale and <strong>may be fractional</strong> (1.57) — its <code>legend</code> maps level index to your label</td></tr>
+            <tr><td class="field">answers[k].score</td><td class="desc">position on your own scale and <strong>may be fractional</strong> (1.57) — its <code>legend</code> (always present, rebuilt from your criteria) maps level index to your label</td></tr>
             <tr><td class="field">answers[k].confidence</td><td class="desc">0..1 for <code>choice</code> and <code>score</code>; absent for <code>noul</code></td></tr>
             <tr><td class="field">source</td><td class="desc"><code>jev</code> or <code>fallback</code> — treat fallback answers as less calibrated second opinions</td></tr>
             <tr><td class="field">legend</td><td class="desc">top-level: this documentation note, not part of any answer</td></tr>
@@ -489,21 +491,20 @@ questions:
         <table class="reveal">
           <thead><tr><th>condition</th><th>what happens</th></tr></thead>
           <tbody>
-            <tr><td class="field">401 / 422</td><td class="desc">surfaced as an error — an invalid key or a bad request is your bug to fix</td></tr>
-            <tr><td class="field">402</td><td class="desc">fallback — the budget is gone, so retrying cannot help; the session model takes over</td></tr>
-            <tr><td class="field">429 / 502</td><td class="desc">fallback, and the circuit opens so the endpoint is not hammered</td></tr>
-            <tr><td class="field">timeout</td><td class="desc">fallback after <code>JEVMODEL_TIMEOUT_MS</code> (default 30 s)</td></tr>
-            <tr><td class="field">network error</td><td class="desc">fallback with the underlying error as <code>fallbackReason</code></td></tr>
-            <tr><td class="field">200 + non-JSON</td><td class="desc">error quoting the offending body, never a bare parser crash</td></tr>
+            <tr><td class="field">provider error</td><td class="desc">auth, invalid request, quota or upstream failure — fallback, and the circuit opens so the endpoint is not hammered; malformed questions are still rejected before the call</td></tr>
+            <tr><td class="field">timeout</td><td class="desc">fallback after <code>JEVMODEL_TIMEOUT_MS</code> (default 30 s), circuit opens</td></tr>
+            <tr><td class="field">no credentials</td><td class="desc">fallback with a stated preflight reason — the session model answers</td></tr>
             <tr><td class="field">bad questions</td><td class="desc">rejected <strong>before</strong> any request is sent</td></tr>
+            <tr><td class="field">bad answers</td><td class="desc">error — a malformed answer never reaches your model silently</td></tr>
           </tbody>
         </table>
 
         <div class="callout reveal">
           <h3>Privacy: what leaves your machine</h3>
-          <p><code>state</code> is sent verbatim to the Jev endpoint. Do not pass material your
-             organisation forbids sending off-box, or point <code>JEVMODEL_URL</code> at a deployment you
-             control. With no API key configured, no request is made at all.</p>
+          <p><code>state</code> is sent verbatim to the endpoint behind your classifier credential —
+             TypeSafe's System One with <code>TYPESAFE_API_KEY</code>, or whichever Jev-capable provider
+             you configured in Pi. Do not pass material your organisation forbids sending off-box.
+             With no classifier credential, no request is made at all: the session model answers.</p>
         </div>
       </div>
     </div>
@@ -547,15 +548,19 @@ questions:
       </div>
 
       <div class="codes" style="margin-top:26px">
-        <table class="reveal">
-          <thead><tr><th>environment</th><th>purpose</th></tr></thead>
-          <tbody>
-            <tr><td class="field">JEVMODEL_API_KEY</td><td class="desc">required — Bearer key from the jevmodel.org Dashboard; without it every call falls back to the session model</td></tr>
-            <tr><td class="field">JEVMODEL_URL</td><td class="desc">endpoint override, default <code>https://jevmodel.org/v1/systemone</code></td></tr>
-            <tr><td class="field">JEVMODEL_TIMEOUT_MS</td><td class="desc">max wait before handing off, default <code>30000</code></td></tr>
-            <tr><td class="field">JEVMODEL_FALLBACK_MODEL</td><td class="desc">pin the fallback to <code>provider/modelId</code>, otherwise the session model answers</td></tr>
-          </tbody>
-        </table>
+        <div class="reveal">
+          <table>
+            <thead><tr><th>environment</th><th>purpose</th></tr></thead>
+            <tbody>
+              <tr><td class="field">TYPESAFE_API_KEY</td><td class="desc">required — Pi's TypeSafe credential (or another Jev-capable provider); without any classifier credential every call falls back to the session model</td></tr>
+              <tr><td class="field">JEVMODEL_TIMEOUT_MS</td><td class="desc">max wait before handing off, default <code>30000</code></td></tr>
+              <tr><td class="field">JEVMODEL_FALLBACK_MODEL</td><td class="desc">pin the fallback to <code>provider/modelId</code>, otherwise the session model answers</td></tr>
+            </tbody>
+          </table>
+          <p class="sub" style="font-size:13.5px;margin-top:12px">Model selection: the first credentialed
+             classifier in Pi's registry, preferring <code>typesafe/jev-latest</code>; override with the
+             tool's <code>model</code> argument as <code>provider/id</code>.</p>
+        </div>
 
         <div class="callout reveal">
           <h3>Unofficial</h3>
