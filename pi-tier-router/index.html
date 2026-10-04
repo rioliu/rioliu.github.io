@@ -383,9 +383,9 @@
         <div class="card reveal">
           <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12h6"/><path d="M11 12l4-6h4"/><path d="M11 12l4 6h4"/><circle cx="4" cy="12" r="2"/></svg></div>
           <h3>Jev is optional</h3>
-          <p>Consulted <strong>only</strong> when the flash model is unsure, and only if
-             <code>JEVMODEL_API_KEY</code> is set. In normal operation it is called zero times — it is
-             never a dependency.</p>
+          <p>Consulted <strong>only</strong> when the flash model is unsure, and only if a
+             credentialed classifier model is configured (<code>TYPESAFE_API_KEY</code>). In normal
+             operation it is called zero times — it is never a dependency.</p>
         </div>
         <div class="card reveal">
           <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h6"/><path d="M17 14l3 3-3 3"/></svg></div>
@@ -447,8 +447,8 @@
         <div class="step reveal">
           <div class="num">03</div>
           <h3>Apply the bar</h3>
-          <p>Confidence ≥ 0.8 is final. Unsure → ask Jev if configured. Neither can answer → keep the
-             current model and <strong>stop routing</strong>; nothing is guessed.</p>
+          <p>Confidence ≥ 0.8 is final. Unsure → ask Jev if a classifier is configured. Neither can
+             answer → keep the current model and <strong>stop routing</strong>; nothing is guessed.</p>
           <div class="snippet">conf ≥ 0.8  → <span class="t-ok">decide</span>
 unsure     → Jev (optional)
 no answer  → <span class="t-note">keep current model</span></div>
@@ -591,7 +591,7 @@ pro    41k tok    $0.12
           <thead><tr><th>requirement</th><th>purpose</th></tr></thead>
           <tbody>
             <tr><td class="field">both role models</td><td class="desc">registered in <code>models.json</code> with working credentials — if either is missing the router stays out of the way</td></tr>
-            <tr><td class="field">JEVMODEL_API_KEY</td><td class="desc">optional — enables Jev as a fallback when the flash model is unsure; without it, its lean is kept</td></tr>
+            <tr><td class="field">TYPESAFE_API_KEY</td><td class="desc">optional — Pi's classifier credential for the Jev step (<code>typesafe/jev-latest</code>); with no credentialed classifier, the flash model's lean is kept</td></tr>
             <tr><td class="field">AUTO_ROUTER_DEBUG</td><td class="desc">set to <code>1</code> to trace each routing decision</td></tr>
           </tbody>
         </table>
