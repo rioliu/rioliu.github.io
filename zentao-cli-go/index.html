@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zentao-cli-go — the Zentao CLI with contract tests</title>
+<meta name="description" content="zentao-cli-go drives Zentao from your terminal — stories, tasks, bugs and first-class comments — with a contract test suite that detects server API drift.">
+<meta property="og:title" content="zentao-cli-go — the Zentao CLI with contract tests">
+<meta property="og:description" content="Zentao in your terminal: stories, tasks, bugs, comments and profiles — verified against real server behavior, not the spec.">
+<meta property="og:url" content="https://rioliu.github.io/zentao-cli-go/">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<style>
+  :root {
+    --bg: #070b12;
+    --bg-soft: #0b1120;
+    --panel: rgba(148, 163, 184, 0.045);
+    --panel-hover: rgba(148, 163, 184, 0.075);
+    --border: rgba(148, 163, 184, 0.14);
+    --border-strong: rgba(148, 163, 184, 0.24);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --faint: #64748b;
+    --teal: #2dd4bf;
+    --mint: #5eead4;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: rgba(45, 212, 191, 0.35); color: #fff; }
+  a { color: inherit; text-decoration: none; }
+  code, pre { font-family: var(--mono); }
+
+  /* ---------- ambient background ---------- */
+  .glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(700px 420px at 18% -5%, rgba(45, 212, 191, 0.16), transparent 65%),
+      radial-gradient(560px 380px at 88% 8%, rgba(13, 148, 136, 0.12), transparent 60%),
+      radial-gradient(900px 500px at 50% 110%, rgba(74, 222, 128, 0.05), transparent 60%);
+  }
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.13) 1px, transparent 1px);
+    background-size: 34px 34px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.5;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ---------- nav ---------- */
+  header.nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    background: rgba(7, 11, 18, 0.72);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
+  .brand img { width: 30px; height: 30px; }
+  .chip {
+    font-size: 11.5px; font-weight: 600; font-family: var(--mono);
+    color: var(--mint); background: rgba(45, 212, 191, 0.1);
+    border: 1px solid rgba(45, 212, 191, 0.28);
+    padding: 2px 9px; border-radius: 999px; letter-spacing: 0;
+  }
+  nav.links { display: flex; align-items: center; gap: 26px; font-size: 14.5px; color: var(--muted); }
+  nav.links a { transition: color 0.15s; }
+  nav.links a:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14.5px; font-weight: 600; padding: 9px 18px;
+    border-radius: 9px; transition: all 0.18s; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #2dd4bf, #0d9488);
+    color: #04211d; box-shadow: 0 4px 22px rgba(45, 212, 191, 0.28);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 7px 28px rgba(45, 212, 191, 0.4); }
+  .btn-ghost { border-color: var(--border-strong); color: var(--text); background: rgba(148, 163, 184, 0.05); }
+  .btn-ghost:hover { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 84px 0 64px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em;
+    color: var(--mint); background: rgba(45, 212, 191, 0.08);
+    border: 1px solid rgba(45, 212, 191, 0.22); border-radius: 999px; padding: 6px 14px;
+    text-transform: uppercase;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  h1 {
+    font-size: clamp(40px, 5.4vw, 62px); line-height: 1.06;
+    letter-spacing: -0.035em; font-weight: 800; margin: 26px 0 20px;
+  }
+  .grad {
+    background: linear-gradient(100deg, var(--mint) 10%, var(--teal) 55%, #4ade80 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { font-size: 18px; color: var(--muted); max-width: 54ch; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; }
+  .cmd-bar {
+    margin-top: 30px; display: flex; align-items: center; gap: 12px;
+    background: #0a0f1a; border: 1px solid var(--border);
+    border-radius: 11px; padding: 13px 16px; max-width: 470px;
+    font-family: var(--mono); font-size: 14.5px;
+  }
+  .cmd-bar .prompt { color: var(--green); user-select: none; }
+  .cmd-bar .cmd { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .copy {
+    margin-left: auto; background: rgba(148, 163, 184, 0.1); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; font-family: var(--mono);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .copy:hover { color: var(--text); border-color: var(--border-strong); }
+  .copy.ok { color: var(--green); border-color: rgba(74, 222, 128, 0.4); }
+  .engines { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 34px; }
+  .engine {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    border: 1px solid var(--border); background: var(--panel);
+    padding: 5px 13px; border-radius: 999px; transition: all 0.15s;
+  }
+  .engine:hover { color: var(--mint); border-color: rgba(45, 212, 191, 0.35); }
+
+  /* ---------- terminal ---------- */
+  .terminal {
+    background: linear-gradient(180deg, #0c1220, #0a0f1a);
+    border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px; padding: 12px 16px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1); background: rgba(148, 163, 184, 0.04);
+  }
+  .term-bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .term-bar i:nth-child(1) { background: #ff5f57; }
+  .term-bar i:nth-child(2) { background: #febc2e; }
+  .term-bar i:nth-child(3) { background: #28c840; }
+  .term-title { margin-left: 10px; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  .term-body { padding: 20px 22px 24px; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; overflow-x: auto; }
+  .term-body .line { white-space: pre; }
+  .t-prompt { color: var(--green); }
+  .t-cmd { color: #f1f5f9; }
+  .t-out { color: var(--muted); }
+  .t-hdr { color: var(--mint); }
+  .t-err { color: var(--red); }
+  .t-note { color: var(--faint); }
+  .t-ok { color: var(--green); }
+  .t-gap { display: block; height: 12px; }
+
+  /* ---------- sections ---------- */
+  section { padding: 88px 0; position: relative; z-index: 1; }
+  .label {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--teal); margin-bottom: 14px;
+  }
+  h2 { font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -0.03em; font-weight: 750; line-height: 1.15; }
+  .sub { color: var(--muted); font-size: 17px; margin-top: 14px; max-width: 62ch; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 15px;
+    padding: 26px 24px; transition: all 0.2s;
+  }
+  .card:hover { background: var(--panel-hover); border-color: rgba(45, 212, 191, 0.3); transform: translateY(-3px); }
+  .card .ico {
+    width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.22); margin-bottom: 17px;
+  }
+  .card .ico svg { width: 20px; height: 20px; stroke: var(--mint); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .card p { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
+  .card p code { font-size: 13px; color: var(--mint); background: rgba(45,212,191,0.08); padding: 1px 5px; border-radius: 5px; }
+
+  /* ---------- steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 26px 24px; }
+  .step .num {
+    font-family: var(--mono); font-size: 13px; color: var(--teal);
+    border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.07);
+    width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px; font-weight: 600;
+  }
+  .step h3 { font-size: 16.5px; font-weight: 650; margin-bottom: 8px; }
+  .step p { font-size: 14.5px; color: var(--muted); margin-bottom: 16px; }
+  .snippet {
+    background: #0a0f1a; border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 10px; padding: 13px 15px; font-family: var(--mono);
+    font-size: 13px; line-height: 1.7; overflow-x: auto; color: var(--muted);
+  }
+  .snippet .t-prompt { color: var(--green); }
+  .snippet .t-cmd { color: var(--text); }
+
+  /* ---------- exit codes ---------- */
+  .codes { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; margin-top: 52px; align-items: start; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; }
+  th, td { text-align: left; padding: 14px 20px; font-size: 14.5px; }
+  thead th {
+    font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--faint); background: rgba(148, 163, 184, 0.05); border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
+  tbody tr:last-child { border-bottom: none; }
+  td.rc { font-family: var(--mono); font-weight: 700; width: 74px; }
+  .rc0 { color: var(--green); } .rc1 { color: var(--amber); } .rc2 { color: var(--red); }
+  td.desc { color: var(--muted); }
+  td.desc code { font-size: 13px; color: var(--mint); background: rgba(45,212,191,0.08); padding: 1px 5px; border-radius: 5px; }
+  .callout {
+    background: linear-gradient(160deg, rgba(45, 212, 191, 0.09), rgba(45, 212, 191, 0.02));
+    border: 1px solid rgba(45, 212, 191, 0.3); border-radius: 15px; padding: 26px 26px;
+  }
+  .callout h3 { font-size: 17px; margin-bottom: 10px; color: var(--mint); }
+  .callout p { font-size: 14.5px; color: var(--muted); margin-bottom: 12px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout code { color: var(--mint); background: rgba(45, 212, 191, 0.1); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+
+  /* ---------- commands ---------- */
+  .cmds td:first-child { font-family: var(--mono); font-size: 13px; color: var(--mint); white-space: nowrap; }
+  .cmds td:first-child code { color: inherit; }
+  .cmds td.desc { white-space: normal; }
+
+  /* ---------- install ---------- */
+  .installs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  .inst { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 24px; }
+  .inst h3 { font-size: 15.5px; font-weight: 650; margin-bottom: 4px; display: flex; align-items: center; gap: 9px; }
+  .inst .hint { font-size: 13px; color: var(--faint); margin-bottom: 15px; }
+  .inst .cmd-bar { margin-top: 0; max-width: none; padding: 11px 13px; font-size: 13.5px; border-radius: 9px; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 44px 0 54px; position: relative; z-index: 1; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .foot .brand { font-size: 16px; }
+  .foot .brand img { width: 24px; height: 24px; }
+  .foot .meta { font-size: 13.5px; color: var(--faint); }
+  .foot nav { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+  .foot nav a:hover { color: var(--mint); }
+
+  /* ---------- reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1000px) {
+    .hero { grid-template-columns: 1fr; padding-top: 60px; gap: 44px; }
+    .features, .steps, .installs { grid-template-columns: repeat(2, 1fr); }
+    .codes { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 660px) {
+    nav.links a:not(.btn) { display: none; }
+    .features, .steps, .installs { grid-template-columns: 1fr; }
+    section { padding: 64px 0; }
+    .cmd-bar { max-width: 100%; }
+    .term-body { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="grid-bg"></div>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#">
+      <img src="logo.svg" alt="zentao-cli-go logo">
+      zentao-cli-go <span class="chip">v0.4.0</span>
+    </a>
+    <nav class="links">
+      <a href="#features">Features</a>
+      <a href="#how">Workflow</a>
+      <a href="#commands">Commands</a>
+      <a href="https://github.com/rioliu/zentao-cli-go">GitHub&nbsp;↗</a>
+      <a class="btn btn-primary" href="https://github.com/rioliu/zentao-cli-go/releases/latest">Download</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ================= HERO ================= -->
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> MIT · tested against Zentao 22.4</span>
+        <h1>The whole dev loop.<br><span class="grad">None of the guesswork.</span></h1>
+        <p class="lede">
+          <strong>zentao-cli-go</strong> drives Zentao from your shell — stories, tasks,
+          bugs and <strong>first-class comments</strong> — and ships a contract test suite
+          that pins what the <strong>server actually does</strong>, not what the upstream
+          OpenAPI spec claims. When behavior drifts, the failing test names it.
+        </p>
+
+        <div class="cmd-bar">
+          <span class="prompt">$</span>
+          <span class="cmd" id="hero-cmd">brew install rioliu/tap/zentao-cli-go</span>
+          <button class="copy" data-copy="brew install rioliu/tap/zentao-cli-go">copy</button>
+        </div>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/rioliu/zentao-cli-go/releases/latest">⬇ &nbsp;Download v0.4.0</a>
+          <a class="btn btn-ghost" href="https://github.com/rioliu/zentao-cli-go">★ &nbsp;Star on GitHub</a>
+        </div>
+
+        <div class="engines">
+          <span class="engine">story</span>
+          <span class="engine">task</span>
+          <span class="engine">bug</span>
+          <span class="engine">epic</span>
+          <span class="engine">testcase</span>
+          <span class="engine">execution</span>
+          <span class="engine">comment</span>
+        </div>
+      </div>
+
+      <div class="terminal" aria-hidden="true">
+        <div class="term-bar"><i></i><i></i><i></i><span class="term-title">prod — zentao</span></div>
+        <div class="term-body">
+<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">zentao login -s http://zentao.corp/zentao -u admin --password-stdin</span></span>
+<span class="line t-out">password: ********</span>
+<span class="line t-ok">logged in to http://zentao.corp/zentao as admin, profile saved: admin@...</span>
+<span class="line"><span class="t-gap"></span></span>
+<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">zentao story create --product 1 --title 'Fix login timeout' ...</span></span>
+<span class="line t-ok">story #14 created</span>
+<span class="line"><span class="t-gap"></span></span>
+<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">zentao comment add story 14 --content '&lt;p&gt;MR: !11 merged&lt;/p&gt;'</span></span>
+<span class="line t-ok">comment added to story #14</span>
+<span class="line"><span class="t-gap"></span></span>
+<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">zentao bug list --json | jq '.[].title'</span></span>
+<span class="line t-out">"Session dies on page refresh"</span>
+<span class="line"><span class="t-gap"></span></span>
+<span class="line"><span class="t-prompt">$</span> <span class="t-cmd">zentao story close 14 --reason done</span></span>
+<span class="line t-ok">story #14 closed</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= FEATURES ================= -->
+  <section id="features">
+    <div class="wrap">
+      <p class="label reveal">Why zentao-cli-go</p>
+      <h2 class="reveal">The spec is a hypothesis.<br>The contract tests are the truth.</h2>
+      <p class="sub reveal">The upstream OpenAPI spec does not match real server behavior — so this CLI
+      owns its schema layer and verifies every claim against a live Zentao.</p>
+
+      <div class="features">
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4z"/><path d="M8.5 9.5l2 2-2 2"/><path d="M13 13.5h3.5"/></svg></div>
+          <h3>Comments are first-class</h3>
+          <p>Comments have no REST endpoint at all — they live in the classic action module behind
+             web-session auth. The CLI handles that so <code>comment add/list</code> works on any
+             object type, from stories to testcases.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h3>Drift detection built in</h3>
+          <p><code>TestSpecClaim_*</code> pins what the spec says, <code>TestServerReality_*</code> pins
+             what the server does. A server upgrade that flips either one makes
+             <code>make test-contract</code> red — and the failing test name <em>is</em> the drift report.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 20v-3"/><path d="M11 20v-7"/><path d="M17 20v-11"/><path d="M14 6h4v4"/></svg></div>
+          <h3>The full dev loop</h3>
+          <p>Story &gt; task &gt; bug create, update, get, list — plus the status transitions in
+             between: <code>activate</code>, <code>start</code>, <code>finish</code>,
+             <code>resolve</code>, <code>close</code>. Notes land in the action stream.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/><path d="M17 4l2 2 3-3"/></svg></div>
+          <h3>Profiles for every instance</h3>
+          <p>Canonical <code>account@server</code> keys with short aliases, <code>--profile</code>
+             one-offs and a shared session cache. Point one CLI at prod and lab without
+             mixing up targets.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/><path d="M4 12h-2"/><path d="M22 12h-2"/></svg></div>
+          <h3>Sessions: reuse until proven dead</h3>
+          <p>Warm starts perform zero logins. A call that hits the expiry signature triggers a
+             transparent re-login and one retry — renewal needs a password source, and the error
+             says so instead of failing mysteriously.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l2.5 2L7 14"/><path d="M12.5 15H17"/></svg></div>
+          <h3>Agent-ready</h3>
+          <p><code>zentao add-skill pi|claude|agents</code> installs a portable SKILL.md so coding
+             agents can work Zentao too — with the same output formats and exit-code contract
+             your scripts rely on.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WORKFLOW ================= -->
+  <section id="how">
+    <div class="wrap">
+      <p class="label reveal">Workflow</p>
+      <h2 class="reveal">From zero to a closed story.</h2>
+
+      <div class="steps">
+        <div class="step reveal">
+          <div class="num">01</div>
+          <h3>Login once</h3>
+          <p>One command authenticates, saves the target as a profile and warms the session
+             cache. Afterwards, commands need no credentials — and a wrong password is never
+             masked by a cached session.</p>
+          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">zentao login -s http://zentao.corp/zentao \
+  -u admin --password-stdin --as prod</span>
+logged in to http://zentao.corp/zentao
+as admin, profile saved: admin@...</div>
+        </div>
+        <div class="step reveal">
+          <div class="num">02</div>
+          <h3>Create and comment</h3>
+          <p>Stories capture the requirement, tasks are the work, bugs are what testing finds.
+             Content is HTML (that is what open-source Zentao renders) — file and stdin forms
+             avoid shell-escaping pain.</p>
+          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">zentao story create --product 1 \
+  --title 'Fix login timeout' ...</span>
+story #14 created
+<span class="t-prompt">$</span> <span class="t-cmd">zentao comment add story 14 \
+  --content '&lt;p&gt;MR: !11 merged&lt;/p&gt;'</span>
+comment added to story #14</div>
+        </div>
+        <div class="step reveal">
+          <div class="num">03</div>
+          <h3>Move it along</h3>
+          <p>Status transitions with the work notes attached — reviewing to active to closed,
+             or a bug from resolve to confirm to close, all from the terminal.</p>
+          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">zentao story activate 14 \
+  --comment '&lt;p&gt;starting work&lt;/p&gt;'</span>
+story #14 activated
+<span class="t-prompt">$</span> <span class="t-cmd">zentao story close 14 --reason done</span>
+story #14 closed</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTRACT ================= -->
+  <section id="contract">
+    <div class="wrap">
+      <p class="label reveal">The contract</p>
+      <h2 class="reveal">Exit codes you can build on.</h2>
+      <p class="sub reveal">Machine-readable outcomes, documented and stable — the same contract
+      for humans, shell pipelines and coding agents.</p>
+
+      <div class="codes">
+        <table class="reveal">
+          <thead><tr><th>rc</th><th>meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="rc rc0">0</td><td class="desc">success — results on stdout</td></tr>
+            <tr><td class="rc rc1">1</td><td class="desc">runtime or auth failure</td></tr>
+            <tr><td class="rc rc2">2</td><td class="desc">usage error — wrong flags, missing arguments</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout reveal">
+          <h3>Three rings, one gate</h3>
+          <p><code>make regression</code> is the gate for every change: a unit ring (protocol
+             helpers, no server, under a second), a contract ring against a disposable Zentao
+             22.4 test environment, and an e2e ring that runs the compiled binary as a
+             subprocess and pins the user-visible contract.</p>
+          <p>Contract tests assert <em>observed</em> behavior — including server bugs like
+             <code>productID</code> placement differing per module. Silent success is the
+             failure mode this project exists to eliminate.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= COMMANDS ================= -->
+  <section id="commands">
+    <div class="wrap">
+      <p class="label reveal">Command reference</p>
+      <h2 class="reveal">Everything it can do.</h2>
+
+      <table class="cmds reveal" style="margin-top: 52px">
+        <thead><tr><th>command</th><th>purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>zentao login</code></td><td class="desc">authenticate, save profile, warm sessions — password via <code>--password-stdin</code> stays out of shell history</td></tr>
+          <tr><td><code>zentao comment add / list</code></td><td class="desc">comments on any object type — <code>story</code>, <code>task</code>, <code>bug</code>, <code>epic</code>, <code>testcase</code>, ...</td></tr>
+          <tr><td><code>zentao story ...</code></td><td class="desc">create, update, get, list, activate, change, close</td></tr>
+          <tr><td><code>zentao task ...</code></td><td class="desc">create, update, get, list, start, finish, close, activate</td></tr>
+          <tr><td><code>zentao bug ...</code></td><td class="desc">create, update, get, list, resolve, confirm, close, activate</td></tr>
+          <tr><td><code>zentao &lt;module&gt; list</code></td><td class="desc">list objects in a scope — <code>--mine</code>, <code>--product N</code>, <code>--execution N</code>, <code>--json</code></td></tr>
+          <tr><td><code>zentao profile</code></td><td class="desc">list, add, use, remove connection profiles</td></tr>
+          <tr><td><code>zentao add-skill</code></td><td class="desc">install the bundled agent skill for Pi, Claude Code or portable agents</td></tr>
+          <tr><td><code>zentao logout</code></td><td class="desc">drop cached sessions</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= INSTALL ================= -->
+  <section id="install">
+    <div class="wrap">
+      <p class="label reveal">Install</p>
+      <h2 class="reveal">Pick your channel.</h2>
+      <p class="sub reveal">Prebuilt binaries, a Homebrew formula, or straight from source.</p>
+
+      <div class="installs">
+        <div class="inst reveal">
+          <h3>Homebrew</h3>
+          <p class="hint">macOS &amp; Linux · prebuilt</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">brew install rioliu/tap/zentao-cli-go</span>
+            <button class="copy" data-copy="brew install rioliu/tap/zentao-cli-go">copy</button>
+          </div>
+        </div>
+        <div class="inst reveal">
+          <h3>Go</h3>
+          <p class="hint">requires Go &ge; 1.26</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">go install …/cmd/zentao@latest</span>
+            <button class="copy" data-copy="go install github.com/rioliu/zentao-cli-go/cmd/zentao@latest">copy</button>
+          </div>
+        </div>
+        <div class="inst reveal">
+          <h3>Binary release</h3>
+          <p class="hint">amd64 &amp; arm64 tarballs</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">…/releases/latest</span>
+            <a class="copy" href="https://github.com/rioliu/zentao-cli-go/releases/latest">download ↓</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <a class="brand" href="https://github.com/rioliu/zentao-cli-go"><img src="logo.svg" alt="zentao-cli-go logo"> zentao-cli-go</a>
+      <p class="meta" style="margin-top:8px">MIT © 2026 Xiaozheng(Rio) Liu · the Zentao CLI with contract tests</p>
+    </div>
+    <nav>
+      <a href="../">Home</a>
+      <a href="https://github.com/rioliu/zentao-cli-go">GitHub</a>
+      <a href="https://github.com/rioliu/zentao-cli-go/releases">Releases</a>
+      <a href="https://github.com/rioliu/homebrew-tap">Homebrew tap</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  // copy-to-clipboard for command bars
+  document.querySelectorAll(".copy[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      navigator.clipboard.writeText(btn.getAttribute("data-copy")).then(function () {
+        var old = btn.textContent;
+        btn.textContent = "copied ✓";
+        btn.classList.add("ok");
+        setTimeout(function () { btn.textContent = old; btn.classList.remove("ok"); }, 1600);
+      });
+    });
+  });
+
+  // gentle reveal on scroll
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+</script>
+</body>
+</html>
