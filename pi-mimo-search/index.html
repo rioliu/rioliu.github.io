@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pi-mimo-search — web search for Pi with citations and cost reporting</title>
+<meta name="description" content="Pi tool backed by the Xiaomi MiMo Web Search plugin (pay-as-you-go): structured citations, per-call cost reporting, works with any main model.">
+<meta property="og:title" content="pi-mimo-search — web search for Pi with citations and cost reporting">
+<meta property="og:description" content="Answer + numbered sources + a per-call cost line, as a regular Pi tool. PAYG search side-call, so your conversation can stay on any provider.">
+<meta property="og:url" content="https://rioliu.github.io/pi-mimo-search/">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<style>
+
+  :root {
+    --bg: #070b12;
+    --bg-soft: #0b1120;
+    --panel: rgba(148, 163, 184, 0.045);
+    --panel-hover: rgba(148, 163, 184, 0.075);
+    --border: rgba(148, 163, 184, 0.14);
+    --border-strong: rgba(148, 163, 184, 0.24);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --faint: #64748b;
+    --teal: #2dd4bf;
+    --mint: #5eead4;
+    --green: #4ade80;
+    --red: #f87171;
+    --amber: #fbbf24;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Inter, Roboto, "Helvetica Neue", sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection { background: rgba(45, 212, 191, 0.35); color: #fff; }
+  a { color: inherit; text-decoration: none; }
+  code, pre { font-family: var(--mono); }
+
+  /* ---------- ambient background ---------- */
+  .glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(700px 420px at 18% -5%, rgba(45, 212, 191, 0.16), transparent 65%),
+      radial-gradient(560px 380px at 88% 8%, rgba(13, 148, 136, 0.12), transparent 60%),
+      radial-gradient(900px 500px at 50% 110%, rgba(74, 222, 128, 0.05), transparent 60%);
+  }
+  .grid-bg {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.13) 1px, transparent 1px);
+    background-size: 34px 34px;
+    -webkit-mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse 90% 60% at 50% 0%, #000 30%, transparent 75%);
+    opacity: 0.5;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ---------- nav ---------- */
+  header.nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    background: rgba(7, 11, 18, 0.72);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
+  .brand img { width: 30px; height: 30px; }
+  .chip {
+    font-size: 11.5px; font-weight: 600; font-family: var(--mono);
+    color: var(--mint); background: rgba(45, 212, 191, 0.1);
+    border: 1px solid rgba(45, 212, 191, 0.28);
+    padding: 2px 9px; border-radius: 999px; letter-spacing: 0;
+  }
+  nav.links { display: flex; align-items: center; gap: 26px; font-size: 14.5px; color: var(--muted); }
+  nav.links a { transition: color 0.15s; }
+  nav.links a:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14.5px; font-weight: 600; padding: 9px 18px;
+    border-radius: 9px; transition: all 0.18s; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #2dd4bf, #0d9488);
+    color: #04211d; box-shadow: 0 4px 22px rgba(45, 212, 191, 0.28);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 7px 28px rgba(45, 212, 191, 0.4); }
+  .btn-ghost { border-color: var(--border-strong); color: var(--text); background: rgba(148, 163, 184, 0.05); }
+  .btn-ghost:hover { background: rgba(148, 163, 184, 0.12); border-color: rgba(148, 163, 184, 0.4); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 84px 0 64px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 56px; align-items: center; }
+  .hero > * { min-width: 0; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.06em;
+    color: var(--mint); background: rgba(45, 212, 191, 0.08);
+    border: 1px solid rgba(45, 212, 191, 0.22); border-radius: 999px; padding: 6px 14px;
+    text-transform: uppercase;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  h1 {
+    font-size: clamp(40px, 5.4vw, 62px); line-height: 1.06;
+    letter-spacing: -0.035em; font-weight: 800; margin: 26px 0 20px;
+  }
+  .grad {
+    background: linear-gradient(100deg, var(--mint) 10%, var(--teal) 55%, #4ade80 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { font-size: 18px; color: var(--muted); max-width: 54ch; }
+  .lede strong { color: var(--text); font-weight: 600; }
+  .cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 32px; }
+  .cmd-bar {
+    margin-top: 30px; display: flex; align-items: center; gap: 12px;
+    background: #0a0f1a; border: 1px solid var(--border);
+    border-radius: 11px; padding: 13px 16px; max-width: 500px;
+    font-family: var(--mono); font-size: 14.5px;
+  }
+  .cmd-bar .prompt { color: var(--green); user-select: none; }
+  .cmd-bar .cmd { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .copy {
+    margin-left: auto; background: rgba(148, 163, 184, 0.1); border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; font-family: var(--mono);
+    padding: 5px 11px; border-radius: 7px; cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+  }
+  .copy:hover { color: var(--text); border-color: var(--border-strong); }
+  .copy.ok { color: var(--green); border-color: rgba(74, 222, 128, 0.4); }
+  .engines { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 34px; }
+  .engine {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    border: 1px solid var(--border); background: var(--panel);
+    padding: 5px 13px; border-radius: 999px; transition: all 0.15s;
+  }
+  .engine:hover { color: var(--mint); border-color: rgba(45, 212, 191, 0.35); }
+
+  /* ---------- terminal ---------- */
+  .terminal {
+    background: linear-gradient(180deg, #0c1220, #0a0f1a);
+    border: 1px solid var(--border); border-radius: 14px;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 7px; padding: 12px 16px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1); background: rgba(148, 163, 184, 0.04);
+  }
+  .term-bar i { width: 11px; height: 11px; border-radius: 50%; display: block; }
+  .term-bar i:nth-child(1) { background: #ff5f57; }
+  .term-bar i:nth-child(2) { background: #febc2e; }
+  .term-bar i:nth-child(3) { background: #28c840; }
+  .term-title { margin-left: 10px; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  .term-body { padding: 20px 22px 24px; font-family: var(--mono); font-size: 13.5px; line-height: 1.75; overflow-x: auto; }
+  .term-body .line { white-space: pre; }
+  .t-prompt { color: var(--green); }
+  .t-cmd { color: #f1f5f9; }
+  .t-out { color: var(--muted); }
+  .t-hdr { color: var(--mint); }
+  .t-err { color: var(--red); }
+  .t-note { color: var(--faint); }
+  .t-ok { color: var(--green); }
+  .t-cost { color: var(--amber); }
+  .t-gap { display: block; height: 12px; }
+
+  /* ---------- sections ---------- */
+  section { padding: 88px 0; position: relative; z-index: 1; }
+  .label {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--teal); margin-bottom: 14px;
+  }
+  h2 { font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -0.03em; font-weight: 750; line-height: 1.15; }
+  .sub { color: var(--muted); font-size: 17px; margin-top: 14px; max-width: 62ch; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 15px;
+    padding: 26px 24px; transition: all 0.2s;
+  }
+  .card:hover { background: var(--panel-hover); border-color: rgba(45, 212, 191, 0.3); transform: translateY(-3px); }
+  .card .ico {
+    width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: rgba(45, 212, 191, 0.1); border: 1px solid rgba(45, 212, 191, 0.22); margin-bottom: 17px;
+  }
+  .card .ico svg { width: 20px; height: 20px; stroke: var(--mint); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; margin-bottom: 8px; }
+  .card p { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
+  .card p code, td code, .callout code, .step p code {
+    font-size: 13px; color: var(--mint); background: rgba(45,212,191,0.08); padding: 1px 5px; border-radius: 5px;
+  }
+
+  /* ---------- steps ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 26px 24px; }
+  .step .num {
+    font-family: var(--mono); font-size: 13px; color: var(--teal);
+    border: 1px solid rgba(45, 212, 191, 0.3); background: rgba(45, 212, 191, 0.07);
+    width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px; font-weight: 600;
+  }
+  .step h3 { font-size: 16.5px; font-weight: 650; margin-bottom: 8px; }
+  .step p { font-size: 14.5px; color: var(--muted); margin-bottom: 16px; }
+  .snippet {
+    background: #0a0f1a; border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 10px; padding: 13px 15px; font-family: var(--mono);
+    font-size: 13px; line-height: 1.7; overflow-x: auto; color: var(--muted);
+    white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .snippet .t-prompt { color: var(--green); }
+  .snippet .t-cmd { color: var(--text); }
+
+  /* ---------- tables + callout ---------- */
+  .codes { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 22px; margin-top: 52px; align-items: start; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--border); border-radius: 15px; overflow: hidden; }
+  th, td { text-align: left; padding: 14px 20px; font-size: 14.5px; }
+  thead th {
+    font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--faint); background: rgba(148, 163, 184, 0.05); border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid rgba(148, 163, 184, 0.08); }
+  tbody tr:last-child { border-bottom: none; }
+  td.field { font-family: var(--mono); font-weight: 600; color: var(--mint); white-space: nowrap; }
+  td.desc { color: var(--muted); }
+  td.desc strong { color: var(--text); }
+  .callout {
+    background: linear-gradient(160deg, rgba(45, 212, 191, 0.09), rgba(45, 212, 191, 0.02));
+    border: 1px solid rgba(45, 212, 191, 0.3); border-radius: 15px; padding: 26px 26px;
+  }
+  .callout h3 { font-size: 17px; margin-bottom: 10px; color: var(--mint); }
+  .callout p { font-size: 14.5px; color: var(--muted); margin-bottom: 12px; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout code.warn { color: var(--red); background: rgba(248, 113, 113, 0.1); padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+
+  /* ---------- billing stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 52px; }
+  .stat {
+    background: linear-gradient(150deg, rgba(45, 212, 191, 0.09), rgba(45, 212, 191, 0.02));
+    border: 1px solid rgba(45, 212, 191, 0.25); border-radius: 15px; padding: 26px 24px;
+  }
+  .stat .big { font-size: clamp(26px, 3vw, 34px); font-weight: 800; letter-spacing: -0.03em; color: var(--mint); font-family: var(--mono); }
+  .stat p { font-size: 14.5px; color: var(--muted); margin-top: 8px; }
+
+  /* ---------- install ---------- */
+  .installs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 52px; }
+  .inst { background: var(--panel); border: 1px solid var(--border); border-radius: 15px; padding: 24px; min-width: 0; }
+  .inst h3 { font-size: 15.5px; font-weight: 650; margin-bottom: 4px; display: flex; align-items: center; gap: 9px; }
+  .inst .hint { font-size: 13px; color: var(--faint); margin-bottom: 15px; }
+  .inst .cmd-bar { margin-top: 0; max-width: none; padding: 11px 13px; font-size: 13.5px; border-radius: 9px; }
+  .inst .cmd { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+
+  /* ---------- footer ---------- */
+  footer { border-top: 1px solid rgba(148, 163, 184, 0.1); padding: 44px 0 54px; position: relative; z-index: 1; }
+  .foot { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .foot .brand { font-size: 16px; }
+  .foot .brand img { width: 24px; height: 24px; }
+  .foot .meta { font-size: 13.5px; color: var(--faint); }
+  .foot nav { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+  .foot nav a:hover { color: var(--mint); }
+
+  /* ---------- reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1000px) {
+    .hero { grid-template-columns: minmax(0, 1fr); padding-top: 60px; gap: 44px; }
+    .features, .steps, .installs, .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .codes { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 660px) {
+    nav.links a:not(.btn) { display: none; }
+    .features, .steps, .installs, .stats { grid-template-columns: minmax(0, 1fr); }
+    section { padding: 64px 0; }
+    .cmd-bar { max-width: 100%; }
+    .cmd-bar .cmd { white-space: normal; overflow-wrap: anywhere; }
+    .codes { overflow-x: auto; }
+    .term-body { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="grid-bg"></div>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="https://github.com/rioliu/pi-mimo-search">
+      <img src="logo.svg" alt="pi-mimo-search logo">
+      mimo-search <span class="chip">MIT</span>
+    </a>
+    <nav class="links">
+      <a href="#why">Why</a>
+      <a href="#how">How it works</a>
+      <a href="#billing">Billing</a>
+      <a href="#errors">Errors</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/rioliu/pi-mimo-search">GitHub&nbsp;↗</a>
+      <a class="btn btn-primary" href="../">Home</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- ================= HERO ================= -->
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> MIT · Pi package · Xiaomi MiMo web search</span>
+        <h1>Web search for Pi.<br><span class="grad">Citations included.</span></h1>
+        <p class="lede">
+          <strong>pi-mimo-search</strong> registers a regular
+          <code style="color:var(--mint)">web_search</code> tool in
+          <a href="https://github.com/earendil-works/pi">Pi</a>, backed by the
+          <strong>Xiaomi MiMo Web Search plugin</strong> (pay-as-you-go). Every call returns
+          <strong>an answer, numbered source citations and the exact cost it just incurred</strong> —
+          while your conversation stays on whatever provider you like, Token Plan included:
+          the search is a side-call, not a provider switch.
+        </p>
+
+        <div class="cmd-bar">
+          <span class="prompt">$</span>
+          <span class="cmd" id="hero-cmd">pi install npm:pi-mimo-search</span>
+          <button class="copy" data-copy="pi install npm:pi-mimo-search">copy</button>
+        </div>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/rioliu/pi-mimo-search">★ &nbsp;View on GitHub</a>
+          <a class="btn btn-ghost" href="https://www.npmjs.com/package/pi-mimo-search">npm package ↗</a>
+        </div>
+
+        <div class="engines">
+          <span class="engine">web_search</span>
+          <span class="engine">url citations</span>
+          <span class="engine">cost per call</span>
+          <span class="engine">any provider</span>
+        </div>
+      </div>
+
+      <div class="terminal" aria-hidden="true">
+        <div class="term-bar"><i></i><i></i><i></i><span class="term-title">pi — web_search</span></div>
+        <div class="term-body">
+<span class="line"><span class="t-prompt">></span> <span class="t-cmd">武汉今天适合户外跑步吗？帮我搜一下天气</span></span>
+<span class="line t-hdr">web_search(query="武汉今天天气")</span>
+<span class="line t-out">  根据搜索结果，武汉今天天气晴朗，当前温度25度，</span>
+<span class="line t-out">  湿度38%…</span>
+<span class="line t-gap"></span>
+<span class="line t-out">  Sources:</span>
+<span class="line t-out">  1. 武汉市天气 空气质量 降水 预警</span>
+<span class="line t-note">     qweather.com · 2026-10-07</span>
+<span class="line t-gap"></span>
+<span class="line t-cost">  [search cost: CNY 0.0160 plugin fee</span>
+<span class="line t-cost">   + $0.00025 tokens = $0.00247 total]</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= WHY ================= -->
+  <section id="why">
+    <div class="wrap">
+      <p class="label reveal">Why</p>
+      <h2 class="reveal">A search tool that<br>shows its receipts.</h2>
+      <p class="sub reveal">MiMo offers web search only as a server-side plugin on its OpenAI-compatible
+      API. This package exposes it to Pi as a plain agent tool — and keeps everything the plugin
+      returns that a naive integration would drop.</p>
+
+      <div class="features">
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><circle cx="19" cy="17" r="2.5"/></svg></div>
+          <h3>Works with any main model</h3>
+          <p>The search is a <strong>side-call</strong> to MiMo's PAYG endpoint. Your conversation can
+             stay on a Token Plan model, Claude, anything — web search being PAYG-only never
+             blocks you.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></div>
+          <h3>Structured citations</h3>
+          <p><code>url_citation</code> annotations are parsed and returned — title, site, publish time,
+             summary — as typed <code>structuredContent</code>, <strong>not dropped</strong> by stream
+             normalization.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>Cost visibility</h3>
+          <p>Every call prints its own cost line — <strong>plugin fee in CNY, tokens in USD</strong> —
+             and returns the same numbers structurally, folded into Pi's session usage so you can
+             reconcile against the MiMo console.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M5 12h4"/><path d="M13 12h6"/><path d="M9 8l4 4-4 4"/><circle cx="4" cy="12" r="1.6"/></svg></div>
+          <h3>Cost controls</h3>
+          <p><code>max_keyword: 1</code> by default — <strong>each keyword is one billed
+             invocation</strong> — with capped <code>limit</code>, thinking disabled, and
+             <code>mimo-v2.6-flash</code> for the side-call.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.8-.9 1.5"/><path d="M12 17h.01"/></svg></div>
+          <h3>Intent recognition by default</h3>
+          <p>The search model decides whether a live search is needed. News, prices, weather, releases —
+             searched; questions answerable from memory — skipped, so <strong>idle conversation costs
+             nothing</strong>.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg></div>
+          <h3>Actionable errors</h3>
+          <p>401 (key), 402 (balance), the <code>webSearchEnabled</code> gate and 429 each come back
+             with <strong>the exact fix</strong> — no status-code archaeology.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section id="how">
+    <div class="wrap">
+      <p class="label reveal">How it works</p>
+      <h2 class="reveal">One tool call.<br>Two providers.</h2>
+
+      <div class="steps">
+        <div class="step reveal">
+          <div class="num">00</div>
+          <h3>The model calls the tool</h3>
+          <p>Ask about anything live — or force it when the model is too confident. The tool
+             description teaches the model when search is appropriate.</p>
+          <div class="snippet">&gt; web_search: latest pi release notes,
+  force=true</div>
+        </div>
+        <div class="step reveal">
+          <div class="num">01</div>
+          <h3>Side-call to MiMo</h3>
+          <p>The payload goes to <code>api.xiaomimimo.com/v1</code> with your PAYG
+             <code>sk-…</code> key: flash model, thinking off, one keyword, capped page count.
+             Your main conversation never moves.</p>
+          <div class="snippet">model: mimo-v2.6-flash (thinking off)
+tools: [{type: web_search,
+  max_keyword: 1, limit: 2, ...}]</div>
+        </div>
+        <div class="step reveal">
+          <div class="num">02</div>
+          <h3>Answer + citations parsed</h3>
+          <p>The response's <code>annotations</code> become numbered citations with title, site and
+             publish time — attached as <code>structuredContent</code> alongside the rendered
+             answer.</p>
+          <div class="snippet">{ answer, citations[],
+  usage{..., pluginInvocations},
+  cost{tokensUsd, pluginFeeCny} }</div>
+        </div>
+        <div class="step reveal">
+          <div class="num">03</div>
+          <h3>Cost lands in your session</h3>
+          <p>The one-line cost summary prints under the answer, and the same numbers fold into Pi's
+             session usage — <strong>reconcilable with the billing console</strong>, not folklore.</p>
+          <div class="snippet">[search cost: CNY 0.0160 plugin fee
+ + $0.00025 tokens = $0.00247 total]</div>
+        </div>
+        <div class="step reveal">
+          <div class="num">04</div>
+          <h3>Auth comes from Pi</h3>
+          <p>Stored <code>/login xiaomi</code> credential first, <code>XIAOMI_API_KEY</code> env
+             fallback. The extension <strong>never reads key material itself</strong>.</p>
+          <div class="snippet"><span class="t-prompt">$</span> <span class="t-cmd">/login xiaomi</span>
+# paste sk-... key
+<span class="t-note">stored in ~/.pi/agent/auth.json (600)</span></div>
+        </div>
+        <div class="step reveal">
+          <div class="num">05</div>
+          <h3>Programmatic results</h3>
+          <p>Codemode scripts and other callers get the full JSON — answer, citations, token usage
+             and cost — directly from the tool result.</p>
+          <div class="snippet">structuredContent.citations[0].url
+structuredContent.cost.totalUsd</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PARAMETERS ================= -->
+  <section id="params">
+    <div class="wrap">
+      <p class="label reveal">Parameters</p>
+      <h2 class="reveal">Three knobs, all capped.</h2>
+      <p class="sub reveal">Everything that can spend money has a conservative default and a hard
+      ceiling.</p>
+
+      <div class="codes">
+        <table class="reveal">
+          <thead><tr><th>parameter</th><th>meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="field">query</td><td class="desc">search query in the user's language — one well-formed query beats several narrow ones</td></tr>
+            <tr><td class="field">force : bool</td><td class="desc">default <code>false</code> — <code>force_search</code>: search even if the model thinks it knows the answer</td></tr>
+            <tr><td class="field">maxKeyword : 1-3</td><td class="desc">default <code>1</code> — concurrent keywords per round, <strong>each is one billed invocation</strong></td></tr>
+            <tr><td class="field">results : 1-5</td><td class="desc">default <code>2</code> — pages returned and injected; more pages = more input tokens</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout reveal">
+          <h3>What a call returns</h3>
+          <p><code>structuredContent</code> carries the full result:</p>
+          <div class="snippet" style="border-color:rgba(45,212,191,0.25)">{ answer,
+  citations: [{ url, title, siteName,
+                publishTime, summary }],
+  usage: { promptTokens, completionTokens,
+           pluginInvocations, pages },
+  cost: { tokensUsd, pluginFeeCny, totalUsd } }</div>
+          <p>The model-facing <code>content</code> is the answer plus the source list plus the
+             one-line cost summary.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= BILLING ================= -->
+  <section id="billing">
+    <div class="wrap">
+      <p class="label reveal">Billing</p>
+      <h2 class="reveal">About two cents a search.</h2>
+      <p class="sub reveal">The plugin fee is charged separately from tokens and separately from
+      Token Plan quota — both visible on every call, so nothing surprises you at month end.</p>
+
+      <div class="stats">
+        <div class="stat reveal">
+          <div class="big">CNY 16<span style="font-size:0.5em;color:var(--muted)"> / 1,000</span></div>
+          <p>Plugin fee per invocation (CN region; USD 5 / 1,000 overseas). One round fires up to
+             <code>max_keyword</code> concurrent searches = that many invocations.</p>
+        </div>
+        <div class="stat reveal">
+          <div class="big">≈ CNY 0.02</div>
+          <p>Typical call: <code>max_keyword: 1</code> — the fee plus a few hundred flash-model
+             tokens charged to your PAYG balance.</p>
+        </div>
+        <div class="stat reveal">
+          <div class="big">3,000+</div>
+          <p>Searches per CNY 50 of balance. The tool prints its cost line per call so session
+             totals stay reconcilable with the <a href="https://platform.xiaomimimo.com/#/console/usage" style="color:var(--mint)">billing console</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ERRORS ================= -->
+  <section id="errors">
+    <div class="wrap">
+      <p class="label reveal">When it fails</p>
+      <h2 class="reveal">Every error names its fix.</h2>
+
+      <div class="codes">
+        <table class="reveal">
+          <thead><tr><th>symptom</th><th>fix</th></tr></thead>
+          <tbody>
+            <tr><td class="field">401</td><td class="desc"><code>/login xiaomi</code> with the <code>sk-…</code> key, or export <code>XIAOMI_API_KEY</code> (exact name)</td></tr>
+            <tr><td class="field">402</td><td class="desc">insufficient PAYG balance — top up at the console's Account Balance page</td></tr>
+            <tr><td class="field">webSearchEnabled false</td><td class="desc">activate the plugin at Plugin Management and <strong>wait ~5 minutes</strong> (server-side cache)</td></tr>
+            <tr><td class="field">429</td><td class="desc">rate limit — retry with backoff</td></tr>
+            <tr><td class="field">no web_search tool</td><td class="desc">package missing or disabled — <code>pi list</code> to check, <code>pi config</code> to enable, restart Pi</td></tr>
+            <tr><td class="field">answers without searching</td><td class="desc">intent mode said "not needed" — ask again with <code>force: true</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout reveal">
+          <h3>PAYG-only, verified</h3>
+          <p>Web search is gated off on <code>token-plan-*</code> endpoints regardless of plugin
+             activation — <code>webSearchEnabled</code> stays false. That is exactly why this tool
+             uses a <code>sk-</code> key on <code>api.xiaomimimo.com</code> as a
+             <strong>side-call</strong>: your main model can keep its Token Plan.</p>
+          <p>The key must be the pay-as-you-go format <code class="warn">sk-…</code> — a
+             <code>tp-…</code> Token Plan key will not work.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INSTALL ================= -->
+  <section id="install">
+    <div class="wrap">
+      <p class="label reveal">Install</p>
+      <h2 class="reveal">Five steps to a live search.</h2>
+      <p class="sub reveal">Steps 1-2 happen in the <a href="https://platform.xiaomimimo.com/" style="color:var(--mint)">MiMo console</a>: create a PAYG <code>sk-…</code> key, top up
+      (CNY 10 is plenty for ~600 searches) and activate the Web Search Plugin. Then:</p>
+
+      <div class="installs">
+        <div class="inst reveal">
+          <h3>1. Give Pi the key</h3>
+          <p class="hint">stored in auth.json (mode 600)</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">/login xiaomi</span>
+            <button class="copy" data-copy="/login xiaomi">copy</button>
+          </div>
+        </div>
+        <div class="inst reveal">
+          <h3>2. Install the package</h3>
+          <p class="hint">or from GitHub, then /reload</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">pi install npm:pi-mimo-search</span>
+            <button class="copy" data-copy="pi install npm:pi-mimo-search">copy</button>
+          </div>
+        </div>
+        <div class="inst reveal">
+          <h3>3. Verify the tool</h3>
+          <p class="hint">expect web_search in the output</p>
+          <div class="cmd-bar">
+            <span class="prompt">$</span>
+            <span class="cmd">pi --print "Reply with exactly: TOOLS: &lt;list&gt;"</span>
+            <button class="copy" data-copy='pi --print "Reply with exactly: TOOLS: &lt;list&gt;"'>copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="codes" style="margin-top:26px">
+        <table class="reveal">
+          <thead><tr><th>alternative</th><th>purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="field">git install</td><td class="desc"><code>pi install git:github.com/rioliu/pi-mimo-search</code> — straight from the repository</td></tr>
+            <tr><td class="field">XIAOMI_API_KEY</td><td class="desc">env fallback for headless/CI setups — exact name matters, e.g. in <code>~/.zshrc</code></td></tr>
+            <tr><td class="field">npm test</td><td class="desc">12 unit tests, plain Node, no dependencies — fixture from a real API response</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout reveal">
+          <h3>Try it</h3>
+          <p>Open Pi and ask anything that needs current information — roughly CNY 0.02 for the
+             first live search:</p>
+          <div class="cmd-bar" style="margin-top:6px">
+            <span class="prompt">></span>
+            <span class="cmd">武汉今天适合户外跑步吗？帮我搜一下天气</span>
+            <button class="copy" data-copy="武汉今天适合户外跑步吗？帮我搜一下天气">copy</button>
+          </div>
+          <p style="margin-top:12px">Source, tests and the full README live at
+             <a href="https://github.com/rioliu/pi-mimo-search"><code>github.com/rioliu/pi-mimo-search</code></a>
+             · MIT licensed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <a class="brand" href="https://github.com/rioliu/pi-mimo-search"><img src="logo.svg" alt="pi-mimo-search logo"> mimo-search</a>
+      <p class="meta" style="margin-top:8px">MIT © 2026 Xiaozheng(Rio) Liu · web search for Pi with citations and cost reporting</p>
+    </div>
+    <nav>
+      <a href="../">Home</a>
+      <a href="https://github.com/rioliu/pi-mimo-search">GitHub</a>
+      <a href="https://www.npmjs.com/package/pi-mimo-search">npm</a>
+      <a href="https://github.com/earendil-works/pi">Pi</a>
+      <a href="../pi-tier-router/">tier-router</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  // copy-to-clipboard for command bars
+  document.querySelectorAll(".copy[data-copy]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      navigator.clipboard.writeText(btn.getAttribute("data-copy")).then(function () {
+        var old = btn.textContent;
+        btn.textContent = "copied ✓";
+        btn.classList.add("ok");
+        setTimeout(function () { btn.textContent = old; btn.classList.remove("ok"); }, 1600);
+      });
+    });
+  });
+
+  // gentle reveal on scroll
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll(".reveal").forEach(function (el) { io.observe(el); });
+</script>
+</body>
+</html>
