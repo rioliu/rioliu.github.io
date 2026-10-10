@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="pi-mimo-search">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e293b"/>
+      <stop offset="1" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5eead4"/>
+      <stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded square background (same shape family as tier-router) -->
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+
+  <!-- magnifier -->
+  <circle cx="55" cy="55" r="30" fill="none" stroke="url(#lens)" stroke-width="9"/>
+  <path d="M77 77 L102 102" fill="none" stroke="#4ade80" stroke-width="11" stroke-linecap="round"/>
+
+  <!-- result lines inside the lens: answer + citations -->
+  <path d="M43 47 H67" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+  <path d="M43 58 H61" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+  <path d="M43 69 H55" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
+</svg>
